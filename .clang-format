@@ -1,2 +1,8 @@
 BasedOnStyle: Google
-ColumnLimit: 120
+AlignAfterOpenBracket: DontAlign
+AlignConsecutiveBitFields: true
+BreakBeforeBinaryOperators: true
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakAfterReturnType: All
+IndentWidth: 4
+TabWidth: 4
