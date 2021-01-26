@@ -15,6 +15,7 @@
  */
 
 #include "prom_test_helpers.h"
+#include "prom_collector_registry_i.h"
 
 void test_prom_metric_formatter_load_l_value(void) {
   prom_metric_formatter_t *mf = prom_metric_formatter_new();
@@ -82,6 +83,7 @@ void test_prom_metric_formatter_load_metrics(void) {
   prom_metric_formatter_t *mf = prom_metric_formatter_new();
   const char *counter_keys[] = {};
   prom_collector_registry_default_init();
+  prom_collector_registry_enable_custom_process_metrics(PROM_COLLECTOR_REGISTRY_DEFAULT, "../test/fixtures/limits", "../test/fixtures/stat");
   prom_metric_t *m_a = prom_metric_new(PROM_COUNTER, "test_counter_a", "counter under test", 0, counter_keys);
   prom_metric_t *m_b = prom_metric_new(PROM_COUNTER, "test_counter_b", "counter under test", 0, counter_keys);
   prom_metric_sample_t *s_a = prom_metric_sample_from_labels(m_a, counter_keys);
@@ -90,7 +92,6 @@ void test_prom_metric_formatter_load_metrics(void) {
   prom_metric_sample_add(s_b, 4.6);
   prom_collector_registry_register_metric(m_a);
   prom_collector_registry_register_metric(m_b);
-
   prom_metric_formatter_load_metrics(mf, PROM_COLLECTOR_REGISTRY_DEFAULT->collectors);
 
   const char *result = prom_metric_formatter_dump(mf);
@@ -109,7 +110,7 @@ void test_prom_metric_formatter_load_metrics(void) {
       "process_virtual_memory_max_bytes -1"};
 
   for (int i = 0; i < 12; i++) {
-    TEST_ASSERT_NOT_NULL(strstr(result, expected[i]));
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(result, expected[i]), expected[i]);
   }
 
   free((char *)result);

@@ -1,50 +1,55 @@
+CMAKE_EXTRA_OPTS ?= -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SKIP_BUILD_RPATH=TRUE
+MAKE_FLAGS ?= VERBOSE=1
 
-SHELL = /bin/bash
+# If TEST is set, build test instead of production binaries
+test: TEST := 1
+test: TESTDIR := .test
 
-GITHUB_ORG = digitalocean
+.PHONY: build test clean distclean docs cleandocs
 
-# Origin does not point to https://github.com/digitalocean/prometheus-client-c.git in TravisCI so we must add a new
-# remote for fetching. Fetch master, diff on the filenames and look for C files. If no changes to C files are made, skip
-# the build.
-CHANGED_FILES = $(shell git remote add ci https://github.com/${GITHUB_ORG}/prometheus-client-c.git > /dev/null 2>&1; git fetch ci master > /dev/null 2>&1; git diff --name-only ci/master | egrep -v '.*\.md$$')
-
-ifneq ($(shell echo "x${CHANGED_FILES}x" | sed 's/\n\t //'), xx)
-default: build_and_test
-else
-default: build_and_test
-# default: changed_files
-	# @echo -e "\033[1;32mNothing to build\033[0m"
-endif
-
-build_and_test: changed_files clean build test package smoke
-.PHONY: build_and_test
-
-all: build_and_test docs
-.PHONY: all
+all: build docs
 
 clean:
-	./auto dev -e auto -a clean
+	rm -rf prom/build
+	rm -rf promhttp/build prom/build.test
+	rm -rf promtest/build
+	cd example && make clean
 
-build: clean
-	./auto dev -e auto -a build -a -t
-.PHONY: build
+cleandocs:
+	rm -rf docs/html docs/latex
 
-test: build
-	./auto dev -e auto -a test
-.PHONY: test
+distclean: clean cleandocs
+	rm -f vendor/parson/testcpp
+	rm -rf bin
 
-package: test
-	./auto dev -e auto -a package
-.PHONY: smoke
+buildprom:
+	-mkdir prom/build$(TESTDIR) && cd prom/build$(TESTDIR) && \
+	TEST=$(TEST) cmake -v -G "Unix Makefiles" $(CMAKE_EXTRA_OPTS) ..
+	cd prom/build$(TESTDIR) && make $(MAKE_FLAGS)
 
-docs: smoke
-	./auto dev -e auto -a docs
-.PHONY: package
+# Run "ctest --verbose --force-new-ctest-process" to get the details
+test: buildprom
+	cd prom/build$(TESTDIR) && make test
 
-changed_files:
-	@echo "Changed C files: ${CHANGED_FILES}"
-.PHONY: changed_files
+buildpromhttp:
+	-mkdir promhttp/build && cd promhttp/build && \
+	cmake -G "Unix Makefiles" $(CMAKE_EXTRA_OPTS) ..
+	cd promhttp/build && $(MAKE) $(MAKE_FLAGS)
 
-smoke: package
-	./auto dev -e auto -a smoke
-.PHONY: smoke
+build: buildprom buildpromhttp
+
+example:
+	cd example && make $(MAKE_FLAGS)
+
+docs: cleandocs
+	doxygen Doxyfile
+
+smoke: build
+	promtest/prom2json.sh
+	-mkdir promtest/build && cd promtest/build && \
+	cmake -v -G "Unix Makefiles" $(CMAKE_EXTRA_OPTS) ..
+	cd promtest/build && $(MAKE) $(MAKE_FLAGS)
+	@echo "Test takes ~ 1 min ..."
+	PATH=$${PWD}/bin:$${PATH} \
+	LD_LIBRARY_PATH=$${PWD}/prom/build:$${PWD}/promhttp/build \
+	promtest/build/promtest

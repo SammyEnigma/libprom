@@ -23,7 +23,7 @@
 #include "prom_process_limits_t.h"
 #include "unity.h"
 
-const char *path = "/code/prom/test/fixtures/limits";
+const char *path = "../test/fixtures/limits";
 
 void test_prom_process_limits_file_parsing(void) {
   prom_process_limits_file_t *f = prom_process_limits_file_new(path);

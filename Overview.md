@@ -1,8 +1,6 @@
-# prometheus-client-c
+# libprom
 
-[![Build Status](https://github.com/digitalocean/prometheus-client-c/workflows/CI/badge.svg)](https://github.com/digitalocean/prometheus-client-c/actions)
-
-This project provides shared libraries for instrumenting software via [Prometheus](https://prometheus.io)
+This project provides shared libraries for instrumenting software and expose metrics using the [Prometheus exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/)
 
 * libprom - Provides the core API. Resources such as counters, gauges, histograms, and
   collector registries can be found here. This library has no dependencies on third-party
@@ -10,30 +8,15 @@ This project provides shared libraries for instrumenting software via [Prometheu
 * libpromhttp - Provides a simple web handler to expose Prometheus metrics for scraping.
   This library has a dependency on libmicrohttpd.
 
-Documentation can be found
-[at the documentation site](https://digitalocean.github.io/prometheus-client-c/)
-and an example can be found under example/. Check under the releases tab for tarballs and debian installers
+Documentation can be generated using `make docs`.
 
 ## Versioning
 
-This project generally follows [semantic versioning](https://semver.org). For each version you can find a corresponding
-release under the releases type. Do not expect the master branch to maintain alignment with the latest release. It may
-contain changes not yet released.
+This project generally follows [semantic versioning](https://semver.org).
 
 ## Development
 
-The only development dependencies required to get started are Docker, Make and Bash. Navigate to the root fo this
-project directory and execute `make`. This process will build the development container, build libprom and libpromhttp,
-run the unit tests and execute the smoke tests.
-
-The stages of the development workflow are automated via `auto` which can be found in the root of this project directory.
-Execute `bash auto -h` for information regarding the different subcommands. Information for each subcommand can be
-obtained by executing `bash auto CMD -h`.
-
-## Contributing
-
-Thank you for your interest in contributing to prometheus-client-c! There two primary ways to get involved with this
-project: documentation and code modifications.  In either case, the process is identical.
+Navigate to the root fo this project directory and execute `make` - it will build libprom, libpromhttp and generate the documentation from the source code. To run all tests, use `make test` and `make smoke`. To generate the source documentation only use `make doc`.
 
 ### General Rules for Contribution
 
@@ -54,7 +37,6 @@ communication process so please do not be shy. Speak up!
 ### Coding Rules for Contribution
 
 * Please follow the general coding style already present in the project.
-  * clang-format your code by executing `bash auto format` before submitting a PR.
   * Every struct must have a constructor function and destructor function.
   * Every method must pass a pointer to the target struct as the first argument.
   * Every function that is not a constructor or destructor and does not return a value must return an int to signify
@@ -63,18 +45,9 @@ communication process so please do not be shy. Speak up!
     and all functions within promhttp must begin with `promhttp_`.
   * All variables must be underscore delimited (i.e. snake-case).
   * All macros must be captilalized.
-  * Every pointer reference must be assigned a NULL value after it is destroyed either by prom_free or its
-    corresponding destructor function.
-* All new functions must introduce a corresponding suite of unit tests.
+* All new functions should introduce a corresponding suite of unit tests.
 * If you add functionality to an existing function, be sure to add a corresponding unit test to verify correctness.
 
 ## Misc
 
 * Language level: C11
-* Operating Systems:
-  * Ubuntu 20.04
-  * Ubuntu 18.04
-  * Ubuntu 16.04
-  * Debian Buster
-  * Debian Stretch
-  * Debian Jessie

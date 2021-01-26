@@ -31,27 +31,6 @@ execute_process(
 
 project(promtest VERSION ${Version} LANGUAGES C)
 
-set(prom_deb ${CMAKE_CURRENT_SOURCE_DIR}/../prom/libprom-dev-${Version}-Linux.deb)
-set(promhttp_deb ${CMAKE_CURRENT_SOURCE_DIR}/../promhttp/libpromhttp-dev-${Version}-Linux.deb)
-
-execute_process(
-    COMMAND dpkg -i ${prom_deb}
-    RESULT_VARIABLE prom_install_result
-)
-
-if(${prom_install_result} GREATER 0)
-    message(FATAL_ERROR "failed to install ${prom_deb}")
-endif()
-
-execute_process(
-    COMMAND dpkg -i ${promhttp_deb}
-    RESULT_VARIABLE promhttp_install_result
-)
-
-if(${promhttp_install_result} GREATER 0)
-    message(FATAL_ERROR "failed to install ${promhttp_deb}")
-endif()
-
 enable_testing()
 set(vendor_dir ${CMAKE_SOURCE_DIR}/../vendor)
 set(test_dir ${CMAKE_SOURCE_DIR}/test)
@@ -116,7 +95,8 @@ add_executable(
     ${test_dir}/promtest_histogram.h
 )
 target_link_libraries(promtest microhttpd prom promhttp Unity parson Threads::Threads)
-target_include_directories(promtest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(promtest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src  ${CMAKE_CURRENT_SOURCE_DIR}/../prom/include  ${CMAKE_CURRENT_SOURCE_DIR}/../promhttp/include )
+target_link_directories(promtest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../prom/build  ${CMAKE_CURRENT_SOURCE_DIR}/../promhttp/build )
 add_test(
     NAME promtest
     COMMAND promtest

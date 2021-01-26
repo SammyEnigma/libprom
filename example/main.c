@@ -50,6 +50,8 @@ static void init(void) {
   promhttp_set_active_collector_registry(NULL);
 }
 
+#define PORT 8000
+
 int main(int argc, const char **argv) {
   init();
   int r = 0;
@@ -74,7 +76,7 @@ int main(int argc, const char **argv) {
   }
 
 
-  struct MHD_Daemon *daemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8000, NULL, NULL);
+  struct MHD_Daemon *daemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL);
   if (daemon == NULL) {
     return 1;
   }
@@ -97,6 +99,7 @@ int main(int argc, const char **argv) {
     return 0;
   }
 
+  printf("RUN 'curl localhost:%d/metrics'\n", PORT);
   signal(SIGINT, intHandler);
   while(done == 0) {}
 
