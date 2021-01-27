@@ -17,17 +17,17 @@ limitations under the License.
 /**
  * @file prom.h
  * @brief Include prom.h to include the entire public API
- * @mainpage Welcome to the documentation site for prometheus-client-c!
+ * @mainpage libprom documentation
  * @tableofcontents
  * @section Introduction
  *
- * prometheus-client-c is a small suite of Prometheus client libraries targeted for the C programming language.
+ * libprom is a small suite of C libraries which can be used to expose metrics using the Prometheus exposition format.
  * In this brief tutorial you will learn how to create and register metrics, update metric samples, and expose metrics
  * over HTTP.
  *
  * @section Creating-and-Registering-Metrics Creating and Registering Metrics
  *
- * prometheus-client-c supports the following metric types:
+ * libprom supports the following metric types:
  *
  * * [Counter](https://prometheus.io/docs/concepts/metric_types/#counter)
  * * [Gauge](https://prometheus.io/docs/concepts/metric_types/#gauge)
@@ -109,10 +109,10 @@ limitations under the License.
  *
  * @section Where-To-Go-From-Here Where to Go From Here?
  *
- * Take a look at the [Files](https://github.internal.digitalocean.com/pages/timeseries/prometheus-client-c/files.html)
+ * Take a look at the [Files](./files.html)
  * tab in this documentation site for more information about the public API available to you. Also, you can take a look
  * at the examples directory at the
- * [Github repository](https://github.internal.digitalocean.com/timeseries/prometheus-client-c) for inspiration.
+ * [Github repository](https://github.com/jelmd/libprom/tree/main/example) for inspiration.
  */
 
 #ifndef PROM_INCLUDED

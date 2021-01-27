@@ -12,6 +12,7 @@ ttyrecord
 _CPack_Packages
 bin
 vendor/parson/testcpp
+*.tmp
 *deb
 *tar.gz
 *vgcore*

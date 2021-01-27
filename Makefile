@@ -16,7 +16,7 @@ clean:
 	cd example && make clean
 
 cleandocs:
-	rm -rf docs/html docs/latex
+	rm -rf docs/html docs/latex Doxyfile.tmp
 
 distclean: clean cleandocs
 	rm -f vendor/parson/testcpp
@@ -42,7 +42,9 @@ example:
 	cd example && make $(MAKE_FLAGS)
 
 docs: cleandocs
-	doxygen Doxyfile
+	VERS=$$( cat VERSION ) && \
+		sed -e "s|@VERSION@|$$VERS|" Doxyfile >Doxyfile.tmp
+	doxygen Doxyfile.tmp
 
 smoke: build
 	promtest/prom2json.sh
