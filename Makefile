@@ -1,17 +1,21 @@
 CMAKE_EXTRA_OPTS ?= -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SKIP_BUILD_RPATH=TRUE
 MAKE_FLAGS ?= VERBOSE=1
+CFLAGS ?= -DPROM_LOG_ENABLE
 
 # If TEST is set, build test instead of production binaries
 test: TEST := 1
 test: TESTDIR := .test
 
-.PHONY: build test clean distclean docs cleandocs
+# Enable troubleshooting info per default.
+prom: CMAKE_EXTRA_OPTS += -DCMAKE_C_FLAGS="-DPROM_LOG_ENABLE"
+
+.PHONY: build test clean distclean docs cleandocs prom promhttp
 
 all: build docs
 
 clean:
-	rm -rf prom/build
-	rm -rf promhttp/build prom/build.test
+	rm -rf prom/build prom/build.test
+	rm -rf promhttp/build
 	rm -rf promtest/build
 	cd example && make clean
 
@@ -22,21 +26,21 @@ distclean: clean cleandocs
 	rm -f vendor/parson/testcpp
 	rm -rf bin
 
-buildprom:
+prom:
 	-mkdir prom/build$(TESTDIR) && cd prom/build$(TESTDIR) && \
 	TEST=$(TEST) cmake -v -G "Unix Makefiles" $(CMAKE_EXTRA_OPTS) ..
 	cd prom/build$(TESTDIR) && make $(MAKE_FLAGS)
 
 # Run "ctest --verbose --force-new-ctest-process" to get the details
-test: buildprom
+test: prom
 	cd prom/build$(TESTDIR) && make test
 
-buildpromhttp:
+promhttp:
 	-mkdir promhttp/build && cd promhttp/build && \
 	cmake -G "Unix Makefiles" $(CMAKE_EXTRA_OPTS) ..
 	cd promhttp/build && $(MAKE) $(MAKE_FLAGS)
 
-build: buildprom buildpromhttp
+build: prom promhttp
 
 example:
 	cd example && make $(MAKE_FLAGS)

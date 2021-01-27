@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,38 @@
 #define PROM_LOG_H
 
 #ifdef PROM_LOG_ENABLE
-#define PROM_LOG(msg) printf("%s %s %s %s %d %s\n", __DATE__, __TIME__, __FILE__, __FUNCTION__, __LINE__, msg);
+
+typedef enum {
+	PLL_NONE = 0,
+	PLL_DBG,
+	PLL_INFO,
+	PLL_WARN,
+	PLL_ERR,
+	PLL_FATAL
+} PROM_LOG_LEVEL;
+
+void prom_log(PROM_LOG_LEVEL level, const char* format, ...);
+
+#define PROM_LOG_PRIV(level, fmt, ...)	\
+	prom_log(level, "%s %s %s:%d::%s(): " fmt , \
+		__DATE__, __TIME__, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
+
+#define PROM_DEBUG(fmt, ...)	PROM_LOG_PRIV(PLL_DBG, fmt, __VA_ARGS__);
+#define PROM_INFO(fmt, ...)		PROM_LOG_PRIV(PLL_INFO, fmt, __VA_ARGS__);
+#define PROM_WARN(fmt, ...)		PROM_LOG_PRIV(PLL_WARN, fmt, __VA_ARGS__);
+#define PROM_ERROR(fmt, ...)	PROM_LOG_PRIV(PLL_ERR, fmt, __VA_ARGS__);
+#define PROM_FATAL(fmt, ...)	PROM_LOG_PRIV(PLL_FATAL, fmt, __VA_ARGS__);
+#define PROM_LOG(msg)			PROM_INFO("%s", msg);
+
 #else
+
+#define PROM_DEBUG(fmt, ...)
+#define PROM_INFO(fmt, ...)
+#define PROM_WARN(fmt, ...)
+#define PROM_ERROR(fmt, ...)
+#define PROM_FATAL(fmt, ...)
 #define PROM_LOG(msg)
+
 #endif  // PROM_LOG_ENABLE
 
 #endif  // PROM_LOG_H

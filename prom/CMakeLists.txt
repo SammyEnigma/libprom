@@ -69,6 +69,7 @@ set(
     ${private_dir}/prom_linked_list_i.h
     ${private_dir}/prom_linked_list_t.h
     ${private_dir}/prom_log.h
+    ${private_dir}/prom_log.c
     ${private_dir}/prom_map.c
     ${private_dir}/prom_map_i.h
     ${private_dir}/prom_map_t.h
