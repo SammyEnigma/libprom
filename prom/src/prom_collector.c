@@ -153,7 +153,7 @@ prom_collector_t *prom_collector_process_new(const char *limits_path, const char
   r = prom_collector_add_metric(self, prom_process_virtual_memory_bytes);
   if (r) return NULL;
 
-  r = prom_collector_add_metric(self, prom_process_resident_memory_bytes);
+  r = prom_collector_add_metric(self, prom_process_rss_memory_bytes);
   if (r) return NULL;
 
   r = prom_collector_add_metric(self, prom_process_start_time_seconds);
@@ -170,6 +170,10 @@ prom_map_t *prom_collector_process_collect(prom_collector_t *self) {
   if (self == NULL) return NULL;
 
   int r = 0;
+  static int PAGE_SZ = 0;
+
+  if (PAGE_SZ == 0)
+	  PAGE_SZ = sysconf(_SC_PAGE_SIZE);
 
   // Allocate and create a *prom_process_limits_file_t
   prom_process_limits_file_t *limits_f = prom_process_limits_file_new(self->proc_limits_file_path);
@@ -238,7 +242,7 @@ prom_map_t *prom_collector_process_collect(prom_collector_t *self) {
     prom_process_stat_destroy(stat);
     return NULL;
   }
-  r = prom_gauge_set(prom_process_resident_memory_bytes, stat->rss*sysconf(_SC_PAGE_SIZE), NULL);
+  r = prom_gauge_set(prom_process_rss_memory_bytes, stat->rss*PAGE_SZ, NULL);
   if (r) {
     prom_process_limits_file_destroy(limits_f);
     prom_map_destroy(limits_map);

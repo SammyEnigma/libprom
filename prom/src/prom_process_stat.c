@@ -28,7 +28,7 @@
 
 prom_gauge_t *prom_process_cpu_seconds_total;
 prom_gauge_t *prom_process_virtual_memory_bytes;
-prom_gauge_t *prom_process_resident_memory_bytes;
+prom_gauge_t *prom_process_rss_memory_bytes;
 prom_gauge_t *prom_process_start_time_seconds;
 
 prom_process_stat_file_t *prom_process_stat_file_new(const char *path) {
@@ -186,8 +186,8 @@ int prom_process_stats_init(void) {
       prom_gauge_new("process_virtual_memory_bytes", "Virtual memory size in bytes.", 0, NULL);
 
   // /proc/[pid]/stat Field 24
-  prom_process_resident_memory_bytes =
-      prom_gauge_new("process_resident_memory_bytes", "Resident memory size in bytes.", 0, NULL);
+  prom_process_rss_memory_bytes =
+      prom_gauge_new("process_rss_memory_bytes", "Resident set size of memory in bytes.", 0, NULL);
 
   prom_process_start_time_seconds =
       prom_gauge_new("process_start_time_seconds", "Start time of the process since unix epoch in seconds.", 0, NULL);
