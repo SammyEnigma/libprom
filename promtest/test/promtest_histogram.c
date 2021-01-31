@@ -117,8 +117,8 @@ int promtest_histogram_setup(void) {
 int promtest_histogram_teardown(void) {
   // Destroy the default registry. This effectively deallocates all metrics
   // registered to it, including itself
-  prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY_DEFAULT);
-  PROM_COLLECTOR_REGISTRY_DEFAULT = NULL;
+  prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY);
+  PROM_COLLECTOR_REGISTRY = NULL;
 
   // Stop the HTTP server
   MHD_stop_daemon(promtest_daemon);

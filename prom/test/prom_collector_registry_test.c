@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +66,7 @@ void test_prom_collector_registry_bridge(void) {
   r = prom_histogram_observe(test_histogram, 7.0, NULL);
   if (r) TEST_FAIL();
 
-  const char *result = prom_collector_registry_bridge(PROM_COLLECTOR_REGISTRY_DEFAULT);
+  const char *result = prom_collector_registry_bridge(PROM_COLLECTOR_REGISTRY);
 
   const char *expected[] = {
       "# HELP test_counter counter under test",
@@ -100,7 +101,7 @@ void test_prom_collector_registry_validate_metric_name(void) {
   prom_registry_test_init();
 
   TEST_ASSERT_EQUAL_INT(
-      0, prom_collector_registry_validate_metric_name(PROM_COLLECTOR_REGISTRY_DEFAULT, "this_is_a_name09"));
+      0, prom_collector_registry_validate_metric_name(PROM_COLLECTOR_REGISTRY, "this_is_a_name09"));
   prom_registry_test_destroy();
 }
 
@@ -116,9 +117,9 @@ void prom_registry_test_init(void) {
 
 static void prom_registry_test_destroy(void) {
   int r = 0;
-  r = prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY_DEFAULT);
-  PROM_COLLECTOR_REGISTRY_DEFAULT = NULL;
-  if (r) TEST_FAIL_MESSAGE("failed to destroy PROM_COLLECTOR_REGISTRY_DEFAULT");
+  r = prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY);
+  PROM_COLLECTOR_REGISTRY = NULL;
+  if (r) TEST_FAIL_MESSAGE("failed to destroy PROM_COLLECTOR_REGISTRY");
 }
 
 int main(int argc, const char **argv) {

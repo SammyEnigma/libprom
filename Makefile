@@ -9,7 +9,7 @@ test: TESTDIR := .test
 # Enable troubleshooting info per default.
 prom: CMAKE_EXTRA_OPTS += -DCMAKE_C_FLAGS="-DPROM_LOG_ENABLE"
 
-.PHONY: build test clean distclean docs cleandocs prom promhttp
+.PHONY: build test clean distclean docs cleandocs prom promhttp example
 
 all: build docs
 

@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +37,7 @@
 #include "prom_process_limits_i.h"
 #include "prom_string_builder_i.h"
 
-prom_collector_registry_t *PROM_COLLECTOR_REGISTRY_DEFAULT;
+prom_collector_registry_t *PROM_COLLECTOR_REGISTRY;
 
 prom_collector_registry_t *prom_collector_registry_new(const char *name) {
   int r = 0;
@@ -88,14 +89,20 @@ int prom_collector_registry_enable_custom_process_metrics(prom_collector_registr
   return 1;
 }
 
-int prom_collector_registry_default_init(void) {
-  if (PROM_COLLECTOR_REGISTRY_DEFAULT != NULL) return 0;
+int prom_collector_registry_init(bool proc) {
+	if (PROM_COLLECTOR_REGISTRY != NULL) return 0;
 
-  PROM_COLLECTOR_REGISTRY_DEFAULT = prom_collector_registry_new("default");
-  if (PROM_COLLECTOR_REGISTRY_DEFAULT) {
-    return prom_collector_registry_enable_process_metrics(PROM_COLLECTOR_REGISTRY_DEFAULT);
-  }
-  return 1;
+	PROM_COLLECTOR_REGISTRY = prom_collector_registry_new("default");
+	if (PROM_COLLECTOR_REGISTRY == NULL)
+		return 1;
+
+	return proc
+		? prom_collector_registry_enable_process_metrics(PROM_COLLECTOR_REGISTRY)
+		: 0;
+}
+
+int prom_collector_registry_default_init(void) {
+	return prom_collector_registry_init(true);
 }
 
 int prom_collector_registry_destroy(prom_collector_registry_t *self) {
@@ -133,8 +140,8 @@ int prom_collector_registry_destroy(prom_collector_registry_t *self) {
 int prom_collector_registry_register_metric(prom_metric_t *metric) {
   PROM_ASSERT(metric != NULL);
 
-  prom_collector_t *default_collector =
-      (prom_collector_t *)prom_map_get(PROM_COLLECTOR_REGISTRY_DEFAULT->collectors, "default");
+	prom_collector_t *default_collector = (prom_collector_t *)
+		prom_map_get(PROM_COLLECTOR_REGISTRY->collectors, "default");
 
   if (default_collector == NULL) {
     return 1;
@@ -163,7 +170,8 @@ int prom_collector_registry_register_collector(prom_collector_registry_t *self, 
     return 1;
   }
   if (prom_map_get(self->collectors, collector->name) != NULL) {
-    PROM_LOG("the given prom_collector_t* is already registered");
+		PROM_WARN("The prom_collector '%s' is already registered - skipping.",
+			collector->name);
     int rr = pthread_rwlock_unlock(self->lock);
     if (rr) {
       PROM_LOG(PROM_PTHREAD_RWLOCK_UNLOCK_ERROR);
@@ -188,6 +196,13 @@ int prom_collector_registry_register_collector(prom_collector_registry_t *self, 
     return 1;
   }
   return 0;
+}
+
+prom_collector_t *
+prom_collector_registry_get(prom_collector_registry_t *self, const char *name) {
+	return (self == NULL || name == NULL)
+		? NULL
+		: prom_map_get(self->collectors, name);
 }
 
 int prom_collector_registry_validate_metric_name(prom_collector_registry_t *self, const char *metric_name) {

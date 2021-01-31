@@ -23,7 +23,7 @@ prom_collector_registry_t *PROM_ACTIVE_REGISTRY;
 
 void promhttp_set_active_collector_registry(prom_collector_registry_t *active_registry) {
   if (!active_registry) {
-    PROM_ACTIVE_REGISTRY = PROM_COLLECTOR_REGISTRY_DEFAULT;
+    PROM_ACTIVE_REGISTRY = PROM_COLLECTOR_REGISTRY;
   } else {
     PROM_ACTIVE_REGISTRY = active_registry;
   }

@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,21 +200,22 @@ static void *prom_map_get_internal(const char *key, size_t *size, size_t *max_si
 }
 
 void *prom_map_get(prom_map_t *self, const char *key) {
-  PROM_ASSERT(self != NULL);
-  int r = 0;
-  r = pthread_rwlock_wrlock(self->rwlock);
-  if (r) {
-    PROM_LOG(PROM_PTHREAD_RWLOCK_LOCK_ERROR);
-    NULL;
-  }
-  void *payload =
-      prom_map_get_internal(key, &self->size, &self->max_size, self->keys, self->addrs, self->free_value_fn);
-  r = pthread_rwlock_unlock(self->rwlock);
-  if (r) {
-    PROM_LOG(PROM_PTHREAD_RWLOCK_UNLOCK_ERROR);
-    return NULL;
-  }
-  return payload;
+	PROM_ASSERT(self != NULL);
+	if (key == NULL)
+		return NULL;
+
+	if (pthread_rwlock_wrlock(self->rwlock)) {
+		PROM_LOG(PROM_PTHREAD_RWLOCK_LOCK_ERROR);
+		return NULL;
+	}
+
+	void *value = prom_map_get_internal(key, &self->size, &self->max_size,
+		self->keys, self->addrs, self->free_value_fn);
+
+	if (pthread_rwlock_unlock(self->rwlock))
+		PROM_LOG(PROM_PTHREAD_RWLOCK_UNLOCK_ERROR);
+
+	return value;
 }
 
 static int prom_map_set_internal(const char *key, void *value, size_t *size, size_t *max_size, prom_linked_list_t *keys,

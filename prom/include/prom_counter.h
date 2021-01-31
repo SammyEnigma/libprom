@@ -35,15 +35,15 @@ limitations under the License.
 typedef prom_metric_t prom_counter_t;
 
 /**
- * @brief Construct a prom_counter_t*
- * @param name The name of the metric
- * @param help The metric description
- * @param label_key_count The number of labels associated with the given metric. Pass 0 if the metric does not
- *                        require labels.
- * @param label_keys A collection of label keys. The number of keys MUST match the value passed as label_key_count. If
- *                   no labels are required, pass NULL. Otherwise, it may be convenient to pass this value as a
- *                   literal.
- * @return The constructed prom_counter_t*
+ * @brief Construct a new prom_counter_t* instance.
+ * @param name The name of the metric.
+ * @param help The metric description.
+ * @param label_key_count The number of labels associated with the given
+ *	metric. Pass \c 0 if the metric does not require labels.
+ * @param label_keys A collection of label keys. The number of keys MUST match
+ *	the value passed as \c label_key_count. If no labels are required, pass
+ *	\c NULL. Otherwise, it may be convenient to pass this value as a literal.
+ * @return A reference to the new prom_counter_t* instance.
  *
  * *Example*
  *

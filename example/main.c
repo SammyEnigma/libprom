@@ -1,5 +1,6 @@
 /**
  * Copyright 2019 DigitalOcean Inc.
+ * Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,10 +77,16 @@ int main(int argc, const char **argv) {
   }
 
 
-  struct MHD_Daemon *daemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL);
-  if (daemon == NULL) {
-    return 1;
-  }
+	unsigned int flags;
+	// Handle each request one after a another using the best event loop style
+	// (SELECT, POLL, or EPOLL) for the current platform
+	flags = MHD_USE_INTERNAL_POLLING_THREAD | MHD_USE_AUTO;
+	// Or answer requests in parallel:
+//	flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_INTERNAL_POLLING_THREAD;
+
+	struct MHD_Daemon *daemon = promhttp_start_daemon(flags, PORT, NULL, NULL);
+	if (daemon == NULL)
+		return 1;
 
   int done = 0;
 
@@ -87,7 +94,7 @@ int main(int argc, const char **argv) {
   void intHandler(int signal) {
     printf("\nshutting down...\n");
     fflush(stdout);
-    prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY_DEFAULT);
+    prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY);
     MHD_stop_daemon(daemon);
     done = 1;
   }
@@ -99,9 +106,15 @@ int main(int argc, const char **argv) {
     return 0;
   }
 
-  printf("RUN 'curl localhost:%d/metrics'\n", PORT);
-  signal(SIGINT, intHandler);
-  while(done == 0) {}
+	printf("RUN 'curl localhost:%d/metrics'\n\n", PORT);
+	signal(SIGINT, intHandler);
 
-  return 0;
+	// main application goes here - for simplicity it just waits for ^C
+	while (! done) {
+		fputc('.', stdout); fflush(stdout);
+		sleep(1);
+	}
+	printf("Done.\n");
+
+	return 0;
 }

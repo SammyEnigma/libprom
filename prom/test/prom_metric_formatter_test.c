@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +83,8 @@ void test_prom_metric_formatter_load_metrics(void) {
 
   prom_metric_formatter_t *mf = prom_metric_formatter_new();
   const char *counter_keys[] = {};
-  prom_collector_registry_default_init();
-  prom_collector_registry_enable_custom_process_metrics(PROM_COLLECTOR_REGISTRY_DEFAULT, "../test/fixtures/limits", "../test/fixtures/stat");
+  prom_collector_registry_init(false);
+  prom_collector_registry_enable_custom_process_metrics(PROM_COLLECTOR_REGISTRY, "../test/fixtures/limits", "../test/fixtures/stat");
   prom_metric_t *m_a = prom_metric_new(PROM_COUNTER, "test_counter_a", "counter under test", 0, counter_keys);
   prom_metric_t *m_b = prom_metric_new(PROM_COUNTER, "test_counter_b", "counter under test", 0, counter_keys);
   prom_metric_sample_t *s_a = prom_metric_sample_from_labels(m_a, counter_keys);
@@ -92,16 +93,18 @@ void test_prom_metric_formatter_load_metrics(void) {
   prom_metric_sample_add(s_b, 4.6);
   prom_collector_registry_register_metric(m_a);
   prom_collector_registry_register_metric(m_b);
-  prom_metric_formatter_load_metrics(mf, PROM_COLLECTOR_REGISTRY_DEFAULT->collectors);
+  prom_metric_formatter_load_metrics(mf, PROM_COLLECTOR_REGISTRY->collectors);
 
   const char *result = prom_metric_formatter_dump(mf);
   const char *expected[] = {
+	  // from "default" collector
       "# HELP test_counter_a counter under test",
       "# TYPE test_counter_a counter",
       "test_counter_a",
       "# HELP test_counter_b counter under test",
       "# TYPE test_counter_b counter",
       "test_counter_b",
+	  // from "process" collector
       "# HELP process_max_fds Maximum number of open file descriptors.",
       "# TYPE process_max_fds gauge",
       "process_max_fds 1048576",
@@ -121,11 +124,11 @@ void test_prom_metric_formatter_load_metrics(void) {
     TEST_FAIL_MESSAGE("Failed to destroy metric formatter");
   }
   mf = NULL;
-  r = prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY_DEFAULT);
+  r = prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY);
   if (r) {
     TEST_FAIL_MESSAGE("Failed to destroy default collector registry");
   }
-  PROM_COLLECTOR_REGISTRY_DEFAULT = NULL;
+  PROM_COLLECTOR_REGISTRY = NULL;
 }
 
 int main(int argc, const char **argv) {
