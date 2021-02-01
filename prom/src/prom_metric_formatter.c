@@ -68,180 +68,184 @@ int prom_metric_formatter_destroy(prom_metric_formatter_t *self) {
   return ret;
 }
 
-int prom_metric_formatter_load_help(prom_metric_formatter_t *self, const char *name, const char *help) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 1;
+int
+prom_metric_formatter_load_help(prom_metric_formatter_t *self,
+	const char *prefix, const char *name, const char *help)
+{
+	if (self == NULL)
+		return 1;
+	if (help == NULL)
+		return 0;
 
-  int r = 0;
-
-  r = prom_string_builder_add_str(self->string_builder, "# HELP ");
-  if (r) return r;
-
-  r = prom_string_builder_add_str(self->string_builder, name);
-  if (r) return r;
-
-  r = prom_string_builder_add_char(self->string_builder, ' ');
-  if (r) return r;
-
-  r = prom_string_builder_add_str(self->string_builder, help);
-  if (r) return r;
-
-  return prom_string_builder_add_char(self->string_builder, '\n');
+	if (prom_string_builder_add_str(self->string_builder, "# HELP ") != 0)
+		return 2;
+	if (prefix != NULL
+		&& prom_string_builder_add_str(self->string_builder, prefix) != 0)
+	{
+		return 3;
+	}
+	if (prom_string_builder_add_str(self->string_builder, name) != 0)
+		return 4;
+	if (prom_string_builder_add_char(self->string_builder, ' ') != 0)
+		return 5;
+	if (prom_string_builder_add_str(self->string_builder, help) != 0)
+		return 6;
+	return prom_string_builder_add_char(self->string_builder, '\n') ? 7 : 0;
 }
 
-int prom_metric_formatter_load_type(prom_metric_formatter_t *self, const char *name, prom_metric_type_t metric_type) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 1;
+int
+prom_metric_formatter_load_type(prom_metric_formatter_t *self,
+	const char *prefix, const char *name, prom_metric_type_t metric_type)
+{
+	if (self == NULL)
+		return 1;
 
-  int r = 0;
+	if (prom_string_builder_add_str(self->string_builder, "# TYPE ") != 0)
+		return 2;
+	if (prefix != NULL
+		&& prom_string_builder_add_str(self->string_builder, prefix) != 0)
+	{
+		return 3;
+	}
+	if (prom_string_builder_add_str(self->string_builder, name) != 0)
+		return 4;
+	if (prom_string_builder_add_char(self->string_builder, ' ') != 0)
+		return 5;
+	if (prom_string_builder_add_str(self->string_builder,
+		prom_metric_type_map[metric_type]) != 0)
+	{
+		return 6;
+	}
 
-  r = prom_string_builder_add_str(self->string_builder, "# TYPE ");
-  if (r) return r;
-
-  r = prom_string_builder_add_str(self->string_builder, name);
-  if (r) return r;
-
-  r = prom_string_builder_add_char(self->string_builder, ' ');
-  if (r) return r;
-
-  r = prom_string_builder_add_str(self->string_builder, prom_metric_type_map[metric_type]);
-  if (r) return r;
-
-  return prom_string_builder_add_char(self->string_builder, '\n');
+	return prom_string_builder_add_char(self->string_builder, '\n') ? 7 : 0;
 }
 
-int prom_metric_formatter_load_l_value(prom_metric_formatter_t *self, const char *name, const char *suffix,
-                                       size_t label_count, const char **label_keys, const char **label_values) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 1;
+int
+prom_metric_formatter_load_l_value(prom_metric_formatter_t *self,
+	const char *name, const char *suffix,
+	size_t label_count, const char **label_keys, const char **label_values)
+{
+	if (self == NULL || name == NULL)
+		return 1;
 
-  int r = 0;
+	if (prom_string_builder_add_str(self->string_builder, name) != 0)
+		return 3;
+	if (suffix != NULL) {
+		if (prom_string_builder_add_char(self->string_builder, '_') != 0)
+			return 4;
+		if (prom_string_builder_add_str(self->string_builder, suffix) != 0)
+			return 5;
+	}
+	if (label_count == 0)
+		return 0;
 
-  r = prom_string_builder_add_str(self->string_builder, name);
-  if (r) return r;
+	if (prom_string_builder_add_char(self->string_builder, '{') != 0)
+		return 6;
+	for (int i = 0; i < label_count; i++) {
+		if (prom_string_builder_add_str(self->string_builder,
+			(const char *) label_keys[i]) != 0)
+		{
+			return 7;
+		}
+		if (prom_string_builder_add_str(self->string_builder, "=\"") != 0)
+			return 9;
+		if (prom_string_builder_add_str(self->string_builder,
+			(const char *) label_values[i]) != 0)
+		{
+			return 10;
+		}
+		if (prom_string_builder_add_str(self->string_builder, "\",") != 0)
+			return 11;
+	}
+	prom_string_builder_truncate(self->string_builder,
+		prom_string_builder_len(self->string_builder) - 1);
+	if (prom_string_builder_add_char(self->string_builder, '}') != 0)
+		return 20;
 
-  if (suffix != NULL) {
-    r = prom_string_builder_add_char(self->string_builder, '_');
-    if (r) return r;
-
-    r = prom_string_builder_add_str(self->string_builder, suffix);
-    if (r) return r;
-  }
-
-  if (label_count == 0) return 0;
-
-  for (int i = 0; i < label_count; i++) {
-    if (i == 0) {
-      r = prom_string_builder_add_char(self->string_builder, '{');
-      if (r) return r;
-    }
-    r = prom_string_builder_add_str(self->string_builder, (const char *)label_keys[i]);
-    if (r) return r;
-
-    r = prom_string_builder_add_char(self->string_builder, '=');
-    if (r) return r;
-
-    r = prom_string_builder_add_char(self->string_builder, '"');
-    if (r) return r;
-
-    r = prom_string_builder_add_str(self->string_builder, (const char *)label_values[i]);
-    if (r) return r;
-
-    r = prom_string_builder_add_char(self->string_builder, '"');
-    if (r) return r;
-
-    if (i == label_count - 1) {
-      r = prom_string_builder_add_char(self->string_builder, '}');
-      if (r) return r;
-    } else {
-      r = prom_string_builder_add_char(self->string_builder, ',');
-      if (r) return r;
-    }
-  }
-  return 0;
+	return 0;
 }
 
-int prom_metric_formatter_load_sample(prom_metric_formatter_t *self, prom_metric_sample_t *sample) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 1;
-
-  int r = 0;
-
-  r = prom_string_builder_add_str(self->string_builder, sample->l_value);
-  if (r) return r;
-
-  r = prom_string_builder_add_char(self->string_builder, ' ');
-  if (r) return r;
-
-  char buffer[50];
-  sprintf(buffer, "%.17g", sample->r_value);
-  r = prom_string_builder_add_str(self->string_builder, buffer);
-  if (r) return r;
-
-  return prom_string_builder_add_char(self->string_builder, '\n');
+int
+prom_metric_formatter_load_sample(prom_metric_formatter_t *self,
+	prom_metric_sample_t *sample, const char *prefix)
+{
+	if (self == NULL)
+		return 1;
+	if (prefix != NULL)
+		prom_string_builder_add_str(self->string_builder, prefix);
+	if (prom_string_builder_add_str(self->string_builder, sample->l_value) != 0)
+		return 2;
+	char buffer[64];
+	sprintf(buffer, " %.17g", sample->r_value);
+	if (prom_string_builder_add_str(self->string_builder, buffer) != 0)
+		return 3;
+	return prom_string_builder_add_char(self->string_builder, '\n') ? 4 : 0;
 }
 
-int prom_metric_formatter_clear(prom_metric_formatter_t *self) {
-  PROM_ASSERT(self != NULL);
-  return prom_string_builder_clear(self->string_builder);
+int
+prom_metric_formatter_clear(prom_metric_formatter_t *self) {
+	PROM_ASSERT(self != NULL);
+	return prom_string_builder_clear(self->string_builder);
 }
 
-char *prom_metric_formatter_dump(prom_metric_formatter_t *self) {
-  PROM_ASSERT(self != NULL);
-  int r = 0;
-  if (self == NULL) return NULL;
-  char *data = prom_string_builder_dump(self->string_builder);
-  if (data == NULL) return NULL;
-  r = prom_string_builder_clear(self->string_builder);
-  if (r) {
-    prom_free(data);
-    return NULL;
-  }
-  return data;
+char *
+prom_metric_formatter_dump(prom_metric_formatter_t *self) {
+	if (self == NULL)
+		return NULL;
+	char *data = prom_string_builder_dump(self->string_builder);
+	prom_string_builder_clear(self->string_builder);
+	return data;
 }
 
-int prom_metric_formatter_load_metric(prom_metric_formatter_t *self, prom_metric_t *metric) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 1;
+int
+prom_metric_formatter_load_metric(prom_metric_formatter_t *self,
+	prom_metric_t *metric, const char *prefix)
+{
+	if (self == NULL)
+		return 1;
+	const char *p = (prefix != NULL && strlen(prefix) == 0) ? NULL : prefix;
 
-  int r = 0;
-
-  r = prom_metric_formatter_load_help(self, metric->name, metric->help);
-  if (r) return r;
-
-  r = prom_metric_formatter_load_type(self, metric->name, metric->type);
-  if (r) return r;
-
-  for (prom_linked_list_node_t *current_node = metric->samples->keys->head; current_node != NULL;
-       current_node = current_node->next) {
-    const char *key = (const char *)current_node->item;
-    if (metric->type == PROM_HISTOGRAM) {
-      prom_metric_sample_histogram_t *hist_sample =
-          (prom_metric_sample_histogram_t *)prom_map_get(metric->samples, key);
-
-      if (hist_sample == NULL) return 1;
-
-      for (prom_linked_list_node_t *current_hist_node = hist_sample->l_value_list->head; current_hist_node != NULL;
-           current_hist_node = current_hist_node->next) {
-        const char *hist_key = (const char *)current_hist_node->item;
-        prom_metric_sample_t *sample = (prom_metric_sample_t *)prom_map_get(hist_sample->samples, hist_key);
-        if (sample == NULL) return 1;
-        r = prom_metric_formatter_load_sample(self, sample);
-        if (r) return r;
-      }
-    } else {
-      prom_metric_sample_t *sample = (prom_metric_sample_t *)prom_map_get(metric->samples, key);
-      if (sample == NULL) return 1;
-      r = prom_metric_formatter_load_sample(self, sample);
-      if (r) return r;
-    }
-  }
-  return prom_string_builder_add_char(self->string_builder, '\n');
+	if (prom_metric_formatter_load_help(self, p, metric->name, metric->help))
+		return 2;
+	if (prom_metric_formatter_load_type(self, p, metric->name, metric->type))
+		return 3;
+	for (prom_linked_list_node_t *current_node = metric->samples->keys->head;
+		current_node != NULL; current_node = current_node->next)
+	{
+		const char *key = (const char *) current_node->item;
+		if (metric->type == PROM_HISTOGRAM) {
+			prom_metric_sample_histogram_t *hist_sample =
+				(prom_metric_sample_histogram_t *)
+				prom_map_get(metric->samples, key);
+			if (hist_sample == NULL)
+				return 4;
+			for (prom_linked_list_node_t *current_hist_node =
+				hist_sample->l_value_list->head; current_hist_node != NULL;
+				current_hist_node = current_hist_node->next)
+			{
+				const char *hist_key = (const char *) current_hist_node->item;
+				prom_metric_sample_t *sample = (prom_metric_sample_t *)
+					prom_map_get(hist_sample->samples, hist_key);
+				if (sample == NULL)
+					return 5;
+				if (prom_metric_formatter_load_sample(self, sample, p))
+					return 6;
+			}
+		} else {
+			prom_metric_sample_t *sample = (prom_metric_sample_t *)
+				prom_map_get(metric->samples, key);
+			if (sample == NULL)
+				return 7;
+			if (prom_metric_formatter_load_sample(self, sample, p))
+				return 8;
+		}
+	}
+	return prom_string_builder_add_char(self->string_builder, '\n') ? 9 : 0;
 }
 
 int
 prom_metric_formatter_load_metrics(prom_metric_formatter_t *self,
-	prom_map_t *collectors, prom_metric_t *scrape_metric)
+	prom_map_t *collectors, prom_metric_t *scrape_metric, const char *mprefix)
 {
 	PROM_ASSERT(self != NULL);
 	int r = 0;
@@ -279,7 +283,7 @@ prom_metric_formatter_load_metrics(prom_metric_formatter_t *self,
 				r++;
 				continue;
 			}
-			r += prom_metric_formatter_load_metric(self, metric);
+			r += prom_metric_formatter_load_metric(self, metric, mprefix);
 		}
 		if (scrape_metric != NULL) {
 			int r = clock_gettime(CLOCK_MONOTONIC, &end);

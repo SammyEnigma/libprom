@@ -1,6 +1,6 @@
 /*
 Copyright 2019 DigitalOcean Inc.
-Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
+Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ limitations under the License.
  * prom collector registry (it has the name "default"). Use
  * \c prom_collector_registry_init() to set it up. Under the hood it also
  * initializes the \c default prom collector, where all your prom metrics alias
- * counters, gauges, histograms will be added by default. If \c true gets
+ * counters, gauges, histograms will be added by default. If \c PROM_PROCESS
+ * gets
  * passed as an argument, a prom collector named \c process gets initialized
  * as well, which contains and collects several metrics about the running
  * process/thread. A prom collector is basically an associative array of prom
@@ -73,7 +74,8 @@ limitations under the License.
  *         PROM_INFO("metric '%s' registered.", my_counter->name);
  * }
  *
- * if (prom_collector_registry_init(true)) {
+ * // prefix all metric names with "myapp_" and report the overall scrape time
+ * if (prom_collector_registry_init(PROM_PROCESS|PROM_SCRAPETIME, "myapp_")) {
  *     foo_metric_init();
  * }
  * @endcode
@@ -147,7 +149,8 @@ limitations under the License.
  * returns the list of registered metrics unless one had set another function
  * to call using \c prom_collector_set_collect_fn(). However, the \c process
  * prom collector automatically created and registered via
- * \c prom_collector_registry_init(true) reads in all process related
+ * \c prom_collector_registry_init(PROM_PROCESS, ...) reads in all process
+ * related
  * data now, updates the values of the relevant metrics and after that it
  * returns the list of metrics to include iin the response as well.
  *
@@ -172,7 +175,8 @@ limitations under the License.
  * But I want to re-use the metrics maintained by the "process" collector.
  *
  * In this case you can do the same as above and use
- * \c prom_collector_registry_init(true) to initialize the default prom registry
+ * \c prom_collector_registry_init(PROM_PROCESS, ...) to initialize the default
+ * prom registry
  * \c PROM_COLLECTOR_REGISTRY. When it is time to expose the metrics just
  * call \c prom_collector_registry_bridge(PROM_COLLECTOR_REGISTRY) and append
  * the returned string to the output of your own export.

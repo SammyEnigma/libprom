@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +56,7 @@ int prom_string_builder_clear(prom_string_builder_t *self);
  * API PRIVATE
  * @brief Remove data from the end
  */
-int prom_string_buillder_truncate(prom_string_builder_t *self, size_t len);
+int prom_string_builder_truncate(prom_string_builder_t *self, size_t len);
 
 /**
  * API PRIVATE

@@ -37,12 +37,12 @@ int prom_metric_formatter_destroy(prom_metric_formatter_t *self);
 /**
  * @brief API PRIVATE Loads the help text
  */
-int prom_metric_formatter_load_help(prom_metric_formatter_t *self, const char *name, const char *help);
+int prom_metric_formatter_load_help(prom_metric_formatter_t *self, const char *prefix, const char *name, const char *help);
 
 /**
  * @brief API PRIVATE Loads the type text
  */
-int prom_metric_formatter_load_type(prom_metric_formatter_t *self, const char *name, prom_metric_type_t metric_type);
+int prom_metric_formatter_load_type(prom_metric_formatter_t *self, const char *prefix, const char *name, prom_metric_type_t metric_type);
 
 /**
  * @brief API PRIVATE Loads the formatter with a metric sample L-value
@@ -54,23 +54,22 @@ int prom_metric_formatter_load_type(prom_metric_formatter_t *self, const char *n
  *
  * The number of const char **and prom_label_value must be the same.
  */
-int prom_metric_formatter_load_l_value(prom_metric_formatter_t *metric_formatter, const char *name, const char *suffix,
-                                       size_t label_count, const char **label_keys, const char **label_values);
+int prom_metric_formatter_load_l_value(prom_metric_formatter_t *metric_formatter, const char *name, const char *suffix, size_t label_count, const char **label_keys, const char **label_values);
 
 /**
  * @brief API PRIVATE Loads the formatter with a metric sample
  */
-int prom_metric_formatter_load_sample(prom_metric_formatter_t *metric_formatter, prom_metric_sample_t *sample);
+int prom_metric_formatter_load_sample(prom_metric_formatter_t *metric_formatter, prom_metric_sample_t *sample, const char *prefix);
 
 /**
  * @brief API PRIVATE Loads a metric in the string exposition format
  */
-int prom_metric_formatter_load_metric(prom_metric_formatter_t *self, prom_metric_t *metric);
+int prom_metric_formatter_load_metric(prom_metric_formatter_t *self, prom_metric_t *metric, const char *prefix);
 
 /**
  * @brief API PRIVATE Loads the given metrics
  */
-int prom_metric_formatter_load_metrics(prom_metric_formatter_t *self, prom_map_t *collectors, prom_metric_t *scrape_metric);
+int prom_metric_formatter_load_metrics(prom_metric_formatter_t *self, prom_map_t *collectors, prom_metric_t *scrape_metric, const char *prefix);
 
 /**
  * @brief API PRIVATE Clear the underlying string_builder

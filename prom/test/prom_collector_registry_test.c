@@ -35,6 +35,7 @@ void setUp(void) {
 }
 
 void tearDown(void) {
+	PROM_COLLECTOR_REGISTRY = NULL;
 	pthread_mutex_unlock(&fn_mutex);
 }
 
@@ -49,21 +50,22 @@ void test_large_registry(void) {
 }
 
 void test_prom_collector_registry_must_register(void) {
-  prom_registry_test_init();
-  int r = 0;
+	prom_registry_test_init();
+	const char *labels[] = {"foo"};
 
-  const char *labels[] = {"foo"};
-  r = prom_counter_inc(test_counter, labels);
-  if (r) TEST_FAIL();
-  r = prom_gauge_add(test_gauge, 2.0, labels);
-  if (r) TEST_FAIL();
+	if (prom_counter_inc(test_counter, labels))
+		TEST_FAIL();
+	if (prom_gauge_add(test_gauge, 2.0, labels))
+		TEST_FAIL();
 
-  prom_metric_sample_t *test_sample_a = prom_metric_sample_from_labels(test_counter, labels);
-  prom_metric_sample_t *test_sample_b = prom_metric_sample_from_labels(test_gauge, labels);
+	prom_metric_sample_t *test_sample_a =
+		prom_metric_sample_from_labels(test_counter, labels);
+	prom_metric_sample_t *test_sample_b =
+		prom_metric_sample_from_labels(test_gauge, labels);
 
-  TEST_ASSERT_EQUAL_DOUBLE(1.0, test_sample_a->r_value);
-  TEST_ASSERT_EQUAL_DOUBLE(2.0, test_sample_b->r_value);
-  prom_registry_test_destroy();
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, test_sample_a->r_value);
+	TEST_ASSERT_EQUAL_DOUBLE(2.0, test_sample_b->r_value);
+	prom_registry_test_destroy();
 }
 
 void test_prom_collector_registry_bridge(void) {
@@ -104,7 +106,7 @@ void test_prom_collector_registry_bridge(void) {
 	};
 
 	for (int i = 0; i < 17; i++) {
-		TEST_ASSERT_NOT_NULL(strstr(result, expected[i]));
+		TEST_ASSERT_NOT_NULL_MESSAGE(strstr(result, expected[i]), expected[i]);
 	}
 
 	free((char *)result);
@@ -118,6 +120,8 @@ void test_prom_collector_registry_default_init(void) {
 	TEST_ASSERT_NOT_NULL_MESSAGE(pr, "PROM_COLLECTOR_REGISTRY not set");
 	TEST_ASSERT_EQUAL_INT_MESSAGE(PROM_PROCESS | PROM_SCRAPETIME, pr->features,
 		"Unexpected pr->features value");
+	TEST_ASSERT_EQUAL_STRING_MESSAGE(pr->mprefix, METRIC_LABEL_SCRAPE "_",
+		"pr->mprefix == NULL");
 	TEST_ASSERT_NOT_NULL_MESSAGE(pr->scrape_duration,
 		"pr->scrape_duration == NULL");
 	TEST_ASSERT_NOT_NULL_MESSAGE(prom_collector_registry_get(pr,
@@ -128,12 +132,14 @@ void test_prom_collector_registry_default_init(void) {
 	PROM_COLLECTOR_REGISTRY = NULL;
 
 
-	TEST_ASSERT_EQUAL_INT_MESSAGE(0, prom_collector_registry_init(PROM_NONE),
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0,
+		prom_collector_registry_init(PROM_NONE, NULL),
 		"default_init() failed");
 	pr = PROM_COLLECTOR_REGISTRY;
 	TEST_ASSERT_NOT_NULL_MESSAGE(pr, "PROM_COLLECTOR_REGISTRY not set");
 	TEST_ASSERT_EQUAL_INT_MESSAGE(0, pr->features,
 		"Unexpected pr->features value");
+	TEST_ASSERT_NULL_MESSAGE(pr->mprefix, "pr->mprefix");
 	TEST_ASSERT_NULL_MESSAGE(pr->scrape_duration,
 		"pr->scrape_duration != NULL");
 	TEST_ASSERT_NOT_NULL_MESSAGE(prom_collector_registry_get(pr,
@@ -145,12 +151,13 @@ void test_prom_collector_registry_default_init(void) {
 
 
 	TEST_ASSERT_EQUAL_INT_MESSAGE(0,
-		prom_collector_registry_init(PROM_SCRAPETIME_ALL),
+		prom_collector_registry_init(PROM_SCRAPETIME_ALL, ""),
 		"default_init() failed");
 	pr = PROM_COLLECTOR_REGISTRY;
 	TEST_ASSERT_NOT_NULL_MESSAGE(pr, "PROM_COLLECTOR_REGISTRY not set");
 	TEST_ASSERT_EQUAL_INT_MESSAGE(PROM_SCRAPETIME | PROM_SCRAPETIME_ALL,
 		pr->features, "Unexpected pr->features value");
+	TEST_ASSERT_NULL_MESSAGE(pr->mprefix, "pr->mprefix");
 	TEST_ASSERT_NOT_NULL_MESSAGE(pr->scrape_duration,
 		"pr->scrape_duration == NULL");
 	TEST_ASSERT_NOT_NULL_MESSAGE(prom_collector_registry_get(pr,
@@ -172,7 +179,7 @@ void test_prom_collector_registry_validate_metric_name(void) {
 
 static void
 prom_registry_test_init(void) {
-	if (prom_collector_registry_init(PROM_PROCESS | PROM_SCRAPETIME)) {
+	if (prom_collector_registry_init(PROM_PROCESS | PROM_SCRAPETIME, NULL)) {
 		PROM_WARN("prom collector registry '%s' init() failed.",
 			COLLECTOR_NAME_DEFAULT);
 	}

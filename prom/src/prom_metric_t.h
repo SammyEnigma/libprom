@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +32,12 @@
 /**
  * @brief API PRIVATE Contains metric type constants
  */
-typedef enum prom_metric_type { PROM_COUNTER, PROM_GAUGE, PROM_HISTOGRAM, PROM_SUMMARY } prom_metric_type_t;
+typedef enum prom_metric_type { PROM_COUNTER, PROM_GAUGE, PROM_HISTOGRAM, PROM_SUMMARY, PROM_UNTYPED } prom_metric_type_t;
 
 /**
  * @brief API PRIVATE Maps metric type constants to human readable string values
  */
-extern char *prom_metric_type_map[4];
+extern char *prom_metric_type_map[5];
 
 /**
  * @brief API PRIVATE An opaque struct to users containing metric metadata; one or more metric samples; and a metric

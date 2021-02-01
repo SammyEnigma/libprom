@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +26,7 @@
 #include "prom_string_builder_t.h"
 
 // The initial size of a string created via prom_string_builder
-#define PROM_STRING_BUILDER_INIT_SIZE 32
+#define PROM_STRING_BUILDER_INIT_SIZE 128
 
 // prom_string_builder_init prototype declaration
 int prom_string_builder_init(prom_string_builder_t *self);

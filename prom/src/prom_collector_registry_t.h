@@ -31,6 +31,7 @@
 
 struct prom_collector_registry {
 	const char *name;				/**< name of the registry. Do not modify! */
+	const char *mprefix;			/**< prefix each metric name with this */
 	PROM_INIT_FLAGS features;		/**< enabled registry features */
 	prom_metric_t *scrape_duration;	/**< scrape duration metric to use */
 	prom_map_t *collectors;			/**< Map of collectors keyed by name */

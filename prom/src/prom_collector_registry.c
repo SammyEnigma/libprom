@@ -48,6 +48,7 @@ prom_collector_registry_t *prom_collector_registry_new(const char *name) {
 
 	self->features = 0;
 	self->scrape_duration = NULL;
+	self->mprefix = NULL;
 
 	self->name = prom_strdup(name);
 	self->collectors = prom_map_new();
@@ -139,7 +140,8 @@ prom_collector_registry_enable_custom_process_metrics(prom_collector_registry_t 
     return 0;
 }
 
-int prom_collector_registry_init(PROM_INIT_FLAGS features) {
+int
+prom_collector_registry_init(PROM_INIT_FLAGS features, const char *mprefix) {
 	int err = 0;
 
 	const char *cname = REGISTRY_NAME_DEFAULT;
@@ -166,15 +168,20 @@ int prom_collector_registry_init(PROM_INIT_FLAGS features) {
 	if (err) {
 		prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY);
 		PROM_COLLECTOR_REGISTRY = NULL;
-	} else if (features & PROM_SCRAPETIME_ALL) {
-		PROM_COLLECTOR_REGISTRY->features |= PROM_SCRAPETIME_ALL;
+	} else {
+		if (features & PROM_SCRAPETIME_ALL)
+			PROM_COLLECTOR_REGISTRY->features |= PROM_SCRAPETIME_ALL;
+		PROM_COLLECTOR_REGISTRY->mprefix = (mprefix==NULL||strlen(mprefix)==0)
+			? NULL
+			: prom_strdup(mprefix);
 	}
 
 	return err;
 }
 
 int prom_collector_registry_default_init(void) {
-	return prom_collector_registry_init(PROM_PROCESS | PROM_SCRAPETIME);
+	return prom_collector_registry_init(PROM_PROCESS | PROM_SCRAPETIME,
+		METRIC_LABEL_SCRAPE "_");
 }
 
 int prom_collector_registry_destroy(prom_collector_registry_t *self) {
@@ -187,6 +194,8 @@ int prom_collector_registry_destroy(prom_collector_registry_t *self) {
 	err += prom_string_builder_destroy(self->string_builder);
 	err += pthread_rwlock_destroy(self->lock);
 	prom_free(self->lock);
+	if (self->mprefix != NULL)
+		prom_free((char *) self->mprefix);
 	prom_free((char *)self->name);
 	prom_free(self);
 	return err;
@@ -291,7 +300,8 @@ const char *prom_collector_registry_bridge(prom_collector_registry_t *self) {
 
 	prom_metric_formatter_clear(self->metric_formatter);
 	prom_metric_formatter_load_metrics(self->metric_formatter, self->collectors,
-		 (self->features & PROM_SCRAPETIME_ALL) ? self->scrape_duration : NULL);
+		 (self->features & PROM_SCRAPETIME_ALL) ? self->scrape_duration : NULL,
+		 self->mprefix);
 
 	if (scrape) {
 		int r = clock_gettime(CLOCK_MONOTONIC, &end);
@@ -300,7 +310,7 @@ const char *prom_collector_registry_bridge(prom_collector_registry_t *self) {
 		double duration = s + ns*1e-9;
 		prom_gauge_set(self->scrape_duration, duration, labels);
 		prom_metric_formatter_load_metric(self->metric_formatter,
-			self->scrape_duration);
+			self->scrape_duration, self->mprefix);
 	}
 	return (const char *) prom_metric_formatter_dump(self->metric_formatter);
 }

@@ -89,8 +89,9 @@ extern prom_collector_registry_t *PROM_COLLECTOR_REGISTRY;
 /**
  * @brief Initializes the default collector registry
  *	\c PROM_COLLECTOR_REGISTRY and enables metric collection on the executing
- *	process. Same as
- *	\c prom_collector_registry_init(PROM_PROCESS|PROM_SCRAPETIME).
+ *	process and sets the metric name prefix to \c METRIC_LABEL_SCRAPE + "_".
+ *	Same as \c prom_collector_registry_init(PROM_PROCESS|PROM_SCRAPETIME,
+ *		METRIC_LABEL_SCRAPE "_").
  * @return A non-zero integer value upon failure
  */
 int prom_collector_registry_default_init(void);
@@ -101,9 +102,11 @@ int prom_collector_registry_default_init(void);
  * @param features	If \c 0, a prom collector registry gets created, which
  *	just contains a single empty collector named \c COLLECTOR_NAME_DEFAULT
  *	where per default all new metrics get attached.
+ * @param mprefix	If not \c NULL, prefix each metric's name with this
+ *	string when metrics get exposed. E.g. one may use "appname_".
  * @return A non-zero integer value upon failure  - the registry is unusabele.
  */
-int prom_collector_registry_init(PROM_INIT_FLAGS features);
+int prom_collector_registry_init(PROM_INIT_FLAGS features, const char *mprefix);
 
 /**
  * @brief Constructs a prom_collector_registry_t* with one empty collector

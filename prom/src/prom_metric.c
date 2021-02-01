@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +31,8 @@
 #include "prom_metric_sample_histogram_i.h"
 #include "prom_metric_sample_i.h"
 
-char *prom_metric_type_map[4] = {"counter", "gauge", "histogram", "summary"};
+char *prom_metric_type_map[5] =
+	{ "counter", "gauge", "histogram", "summary", "untyped" };
 
 prom_metric_t *prom_metric_new(prom_metric_type_t metric_type, const char *name, const char *help,
                                size_t label_key_count, const char **label_keys) {

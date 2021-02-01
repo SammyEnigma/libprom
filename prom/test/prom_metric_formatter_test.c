@@ -37,7 +37,7 @@ void test_prom_metric_formatter_load_sample(void) {
   prom_metric_formatter_t *mf = prom_metric_formatter_new();
   const char *l_value = "test{foo=\"one\",bar=\"two\",bing=\"three\"}";
   prom_metric_sample_t *sample = prom_metric_sample_new(PROM_COUNTER, l_value, 22.2);
-  prom_metric_formatter_load_sample(mf, sample);
+  prom_metric_formatter_load_sample(mf, sample, NULL);
   char *actual = prom_metric_formatter_dump(mf);
   char *expected = "test{foo=\"one\",bar=\"two\",bing=\"three\"}";
   TEST_ASSERT_NOT_NULL(strstr(actual, expected));
@@ -59,7 +59,7 @@ void test_prom_metric_formatter_load_metric(void) {
   prom_metric_sample_add(s_a, 2.3);
   prom_metric_sample_t *s_b = prom_metric_sample_from_labels(m, sample_b);
   prom_metric_sample_add(s_b, 4.6);
-  prom_metric_formatter_load_metric(mf, m);
+  prom_metric_formatter_load_metric(mf, m, "");
   const char *result = prom_metric_formatter_dump(mf);
 
   char *substr =
@@ -83,7 +83,7 @@ void test_prom_metric_formatter_load_metrics(void) {
 
   prom_metric_formatter_t *mf = prom_metric_formatter_new();
   const char *counter_keys[] = {};
-  prom_collector_registry_init(PROM_NONE);
+  prom_collector_registry_init(PROM_NONE, "");
   prom_collector_registry_enable_custom_process_metrics(PROM_COLLECTOR_REGISTRY, "../test/fixtures/limits", "../test/fixtures/stat");
   prom_metric_t *m_a = prom_metric_new(PROM_COUNTER, "test_counter_a", "counter under test", 0, counter_keys);
   prom_metric_t *m_b = prom_metric_new(PROM_COUNTER, "test_counter_b", "counter under test", 0, counter_keys);
@@ -93,7 +93,8 @@ void test_prom_metric_formatter_load_metrics(void) {
   prom_metric_sample_add(s_b, 4.6);
   prom_collector_registry_register_metric(m_a);
   prom_collector_registry_register_metric(m_b);
-  prom_metric_formatter_load_metrics(mf, PROM_COLLECTOR_REGISTRY->collectors, NULL);
+  prom_metric_formatter_load_metrics(mf, PROM_COLLECTOR_REGISTRY->collectors,
+	NULL, "");
 
   const char *result = prom_metric_formatter_dump(mf);
   const char *expected[] = {
