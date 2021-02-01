@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +30,13 @@
 #include "prom_string_builder_t.h"
 
 struct prom_collector_registry {
-  const char *name;
-  bool disable_process_metrics;              /**< Disables the collection of process metrics */
-  prom_map_t *collectors;                    /**< Map of collectors keyed by name */
-  prom_string_builder_t *string_builder;     /**< Enables string building */
-  prom_metric_formatter_t *metric_formatter; /**< metric formatter for metric exposition on bridge call */
-  pthread_rwlock_t *lock;                    /**< mutex for safety against concurrent registration */
+	const char *name;				/**< name of the registry. Do not modify! */
+	PROM_INIT_FLAGS features;		/**< enabled registry features */
+	prom_metric_t *scrape_duration;	/**< scrape duration metric to use */
+	prom_map_t *collectors;			/**< Map of collectors keyed by name */
+	prom_string_builder_t *string_builder;		/**< string building */
+	prom_metric_formatter_t *metric_formatter;	/**< export metric(s) */
+	pthread_rwlock_t *lock;	/**< mutex to guard concurrent modfications */
 };
 
 #endif  // PROM_REGISTRY_T_H

@@ -1,6 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
- * Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ void test_prom_metric_formatter_load_metrics(void) {
 
   prom_metric_formatter_t *mf = prom_metric_formatter_new();
   const char *counter_keys[] = {};
-  prom_collector_registry_init(false);
+  prom_collector_registry_init(PROM_NONE);
   prom_collector_registry_enable_custom_process_metrics(PROM_COLLECTOR_REGISTRY, "../test/fixtures/limits", "../test/fixtures/stat");
   prom_metric_t *m_a = prom_metric_new(PROM_COUNTER, "test_counter_a", "counter under test", 0, counter_keys);
   prom_metric_t *m_b = prom_metric_new(PROM_COUNTER, "test_counter_b", "counter under test", 0, counter_keys);
@@ -93,7 +93,7 @@ void test_prom_metric_formatter_load_metrics(void) {
   prom_metric_sample_add(s_b, 4.6);
   prom_collector_registry_register_metric(m_a);
   prom_collector_registry_register_metric(m_b);
-  prom_metric_formatter_load_metrics(mf, PROM_COLLECTOR_REGISTRY->collectors);
+  prom_metric_formatter_load_metrics(mf, PROM_COLLECTOR_REGISTRY->collectors, NULL);
 
   const char *result = prom_metric_formatter_dump(mf);
   const char *expected[] = {

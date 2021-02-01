@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ typedef enum {
 void prom_log(PROM_LOG_LEVEL level, const char* format, ...);
 
 #define PROM_LOG_PRIV(level, fmt, ...)	\
-	prom_log(level, "%s %s %s:%d::%s(): " fmt , \
-		__DATE__, __TIME__, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
+	prom_log(level, "%s:%d::%s(): " fmt , \
+		__FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
 
 #define PROM_DEBUG(fmt, ...)	PROM_LOG_PRIV(PLL_DBG, fmt, __VA_ARGS__);
 #define PROM_INFO(fmt, ...)		PROM_LOG_PRIV(PLL_INFO, fmt, __VA_ARGS__);

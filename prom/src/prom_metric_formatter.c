@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +19,13 @@
 
 // Public
 #include "prom_alloc.h"
+#include "prom_gauge.h"
 
 // Private
 #include "prom_assert.h"
 #include "prom_collector_t.h"
 #include "prom_linked_list_t.h"
+#include "prom_log.h"
 #include "prom_map_i.h"
 #include "prom_metric_formatter_i.h"
 #include "prom_metric_sample_histogram_t.h"
@@ -236,26 +239,56 @@ int prom_metric_formatter_load_metric(prom_metric_formatter_t *self, prom_metric
   return prom_string_builder_add_char(self->string_builder, '\n');
 }
 
-int prom_metric_formatter_load_metrics(prom_metric_formatter_t *self, prom_map_t *collectors) {
-  PROM_ASSERT(self != NULL);
-  int r = 0;
-  for (prom_linked_list_node_t *current_node = collectors->keys->head; current_node != NULL;
-       current_node = current_node->next) {
-    const char *collector_name = (const char *)current_node->item;
-    prom_collector_t *collector = (prom_collector_t *)prom_map_get(collectors, collector_name);
-    if (collector == NULL) return 1;
+int
+prom_metric_formatter_load_metrics(prom_metric_formatter_t *self,
+	prom_map_t *collectors, prom_metric_t *scrape_metric)
+{
+	PROM_ASSERT(self != NULL);
+	int r = 0;
+	struct timespec start, end;
+	static const char *labels[] = { "" };
 
-    prom_map_t *metrics = collector->collect_fn(collector);
-    if (metrics == NULL) return 1;
+	for (prom_linked_list_node_t *current_node = collectors->keys->head;
+		current_node != NULL; current_node = current_node->next)
+	{
+		if (scrape_metric != NULL)
+			clock_gettime(CLOCK_MONOTONIC, &start);
 
-    for (prom_linked_list_node_t *current_node = metrics->keys->head; current_node != NULL;
-         current_node = current_node->next) {
-      const char *metric_name = (const char *)current_node->item;
-      prom_metric_t *metric = (prom_metric_t *)prom_map_get(metrics, metric_name);
-      if (metric == NULL) return 1;
-      r = prom_metric_formatter_load_metric(self, metric);
-      if (r) return r;
-    }
-  }
-  return r;
+		const char *cname = (const char *) current_node->item;
+		prom_collector_t *c = (prom_collector_t *)
+			prom_map_get(collectors, cname);
+		if (c == NULL) {
+			PROM_WARN("Collector '%s' not found.", cname);
+			r++;
+			continue;
+		}
+
+		prom_map_t *metrics = c->collect_fn(c);
+		if (metrics == NULL)
+			continue;
+
+		for (prom_linked_list_node_t *current_node = metrics->keys->head;
+			current_node != NULL; current_node = current_node->next)
+		{
+			const char *mname = (const char *) current_node->item;
+			prom_metric_t *metric = (prom_metric_t *)
+				prom_map_get(metrics, mname);
+			if (metric == NULL) {
+				PROM_WARN("Collector '%s' has no metric named '%s'.", cname,
+					mname);
+				r++;
+				continue;
+			}
+			r += prom_metric_formatter_load_metric(self, metric);
+		}
+		if (scrape_metric != NULL) {
+			int r = clock_gettime(CLOCK_MONOTONIC, &end);
+			time_t s = (r == 0) ? end.tv_sec - start.tv_sec : 0;
+			long ns = (r == 0) ? end.tv_nsec - start.tv_nsec : 0;
+			double duration = s + ns*1e-9;
+			labels[0] = cname;
+			prom_gauge_set(scrape_metric, duration, labels);
+		}
+	}
+	return r;
 }

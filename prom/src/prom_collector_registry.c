@@ -1,6 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
- * Copyright 2020 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include <pthread.h>
 #include <regex.h>
 #include <stdio.h>
+#include <time.h>
 
 // Public
 #include "prom_alloc.h"
@@ -40,114 +41,168 @@
 prom_collector_registry_t *PROM_COLLECTOR_REGISTRY;
 
 prom_collector_registry_t *prom_collector_registry_new(const char *name) {
-  int r = 0;
+	prom_collector_registry_t *self = (prom_collector_registry_t *)
+		prom_malloc(sizeof(prom_collector_registry_t));
+	if (self == NULL)
+		return NULL;
 
-  prom_collector_registry_t *self = (prom_collector_registry_t *)prom_malloc(sizeof(prom_collector_registry_t));
+	self->features = 0;
+	self->scrape_duration = NULL;
 
-  self->disable_process_metrics = false;
+	self->name = prom_strdup(name);
+	self->collectors = prom_map_new();
+	if (self->collectors != NULL) {
+		prom_map_set_free_value_fn(self->collectors,
+			&prom_collector_free_generic);
+		prom_map_set(self->collectors, COLLECTOR_NAME_DEFAULT,
+			prom_collector_new(COLLECTOR_NAME_DEFAULT));
+	}
 
-  self->name = prom_strdup(name);
-  self->collectors = prom_map_new();
-  prom_map_set_free_value_fn(self->collectors, &prom_collector_free_generic);
-  prom_map_set(self->collectors, "default", prom_collector_new("default"));
-
-  self->metric_formatter = prom_metric_formatter_new();
-  self->string_builder = prom_string_builder_new();
-  self->lock = (pthread_rwlock_t *)prom_malloc(sizeof(pthread_rwlock_t));
-  r = pthread_rwlock_init(self->lock, NULL);
-  if (r) {
-    PROM_LOG("failed to initialize rwlock");
-    return NULL;
-  }
-  return self;
+	self->metric_formatter = prom_metric_formatter_new();
+	self->string_builder = prom_string_builder_new();
+	self->lock = (pthread_rwlock_t *) prom_malloc(sizeof(pthread_rwlock_t));
+	if (pthread_rwlock_init(self->lock, NULL) != 0 || self->name == NULL
+		|| self->collectors == NULL || self->metric_formatter == 0
+		|| self->string_builder == NULL)
+	{
+		PROM_LOG("failed to initialize rwlock");
+		prom_collector_registry_destroy(self);
+		return NULL;
+	}
+	return self;
 }
 
-int prom_collector_registry_enable_process_metrics(prom_collector_registry_t *self) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 1;
-  prom_collector_t *process_collector = prom_collector_process_new(NULL, NULL);
-  if (process_collector) {
-    prom_map_set(self->collectors, "process", process_collector);
+int
+prom_collector_registry_enable_process_metrics(prom_collector_registry_t *self)
+{
+	if (self == NULL)
+		return 0;
+
+	const char *cname = COLLECTOR_NAME_PROCESS;
+	if (prom_map_get(self->collectors, cname) != NULL) {
+		PROM_WARN("A collector named '%s' is already registered.", cname);
+		return 1;
+	}
+	prom_collector_t *c = prom_collector_process_new(NULL, NULL);
+	if (c == NULL)
+		return 2;
+	if (prom_map_set(self->collectors, cname, c) != 0) {
+		return 3;
+	}
+
+	self->features |= PROM_PROCESS;
+	return 0;
+}
+
+int
+prom_collector_registry_enable_scrape_metrics(prom_collector_registry_t *self) {
+	const char *mname = METRIC_NAME_SCRAPE;
+	if (self == NULL)
+		return 1;
+
+	prom_gauge_t *g = prom_gauge_new(mname, "Duration of a collector scrape",
+		1, (const char *[]) {"collector"});
+	if (g == NULL)
+		return 1;
+	self->scrape_duration = g;
+	self->features |= PROM_SCRAPETIME;
+	return 0;
+}
+
+int
+prom_collector_registry_enable_custom_process_metrics(prom_collector_registry_t *self,
+	const char *limits_path, const char *stats_path)
+{
+	const char *cname = COLLECTOR_NAME_PROCESS;
+	if (self == NULL) {
+		PROM_WARN("prom_collector_registry_t is NULL", "");
+		return 1;
+	}
+	prom_collector_t *c = prom_collector_registry_get(self, cname);
+	if (c != NULL) {
+		PROM_WARN("The registry '%s' already contains a '%s' collector.",
+			self->name, cname);
+		return 1;
+	}
+	c = prom_collector_process_new(limits_path, stats_path);
+	if (c == NULL) {
+		PROM_WARN("Failed to create a new '%s' collector from '%s' and '%s'.",
+			cname, limits_path, stats_path);
+		return 1;
+	}
+
+	if (prom_map_set(self->collectors, cname, c) != 0) {
+		prom_collector_destroy(c);
+		return 1;
+	}
+	self->features |= PROM_PROCESS;
     return 0;
-  }
-  return 1;
 }
 
-int prom_collector_registry_enable_custom_process_metrics(prom_collector_registry_t *self,
-                                                          const char *process_limits_path,
-                                                          const char *process_stats_path) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) {
-    PROM_LOG("prom_collector_registry_t is NULL");
-    return 1;
-  }
-  prom_collector_t *process_collector = prom_collector_process_new(process_limits_path, process_stats_path);
-  if (process_collector) {
-    prom_map_set(self->collectors, "process", process_collector);
-    return 0;
-  }
-  return 1;
-}
+int prom_collector_registry_init(PROM_INIT_FLAGS features) {
+	int err = 0;
 
-int prom_collector_registry_init(bool proc) {
-	if (PROM_COLLECTOR_REGISTRY != NULL) return 0;
+	const char *cname = REGISTRY_NAME_DEFAULT;
 
-	PROM_COLLECTOR_REGISTRY = prom_collector_registry_new("default");
+	if (PROM_COLLECTOR_REGISTRY != NULL) {
+		PROM_WARN("The registry '%s' is already set as default registry.",
+			PROM_COLLECTOR_REGISTRY->name);
+		abort();
+		return 1;
+	}
+
+	PROM_COLLECTOR_REGISTRY = prom_collector_registry_new(cname);
 	if (PROM_COLLECTOR_REGISTRY == NULL)
 		return 1;
 
-	return proc
-		? prom_collector_registry_enable_process_metrics(PROM_COLLECTOR_REGISTRY)
-		: 0;
+	if (features & PROM_PROCESS)
+		err +=
+		prom_collector_registry_enable_process_metrics(PROM_COLLECTOR_REGISTRY);
+	if (features & PROM_SCRAPETIME_ALL)
+		features |= PROM_SCRAPETIME;
+	if ((err == 0) && (features & PROM_SCRAPETIME))
+		err +=
+		prom_collector_registry_enable_scrape_metrics(PROM_COLLECTOR_REGISTRY);
+	if (err) {
+		prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY);
+		PROM_COLLECTOR_REGISTRY = NULL;
+	} else if (features & PROM_SCRAPETIME_ALL) {
+		PROM_COLLECTOR_REGISTRY->features |= PROM_SCRAPETIME_ALL;
+	}
+
+	return err;
 }
 
 int prom_collector_registry_default_init(void) {
-	return prom_collector_registry_init(true);
+	return prom_collector_registry_init(PROM_PROCESS | PROM_SCRAPETIME);
 }
 
 int prom_collector_registry_destroy(prom_collector_registry_t *self) {
-  if (self == NULL) return 0;
+	if (self == NULL)
+		return 0;
 
-  int r = 0;
-  int ret = 0;
-
-  r = prom_map_destroy(self->collectors);
-  self->collectors = NULL;
-  if (r) ret = r;
-
-  r = prom_metric_formatter_destroy(self->metric_formatter);
-  self->metric_formatter = NULL;
-  if (r) ret = r;
-
-  r = prom_string_builder_destroy(self->string_builder);
-  self->string_builder = NULL;
-  if (r) ret = r;
-
-  r = pthread_rwlock_destroy(self->lock);
-  prom_free(self->lock);
-  self->lock = NULL;
-  if (r) ret = r;
-
-  prom_free((char *)self->name);
-  self->name = NULL;
-
-  prom_free(self);
-  self = NULL;
-
-  return ret;
+	int err = prom_map_destroy(self->collectors);
+	err += prom_gauge_destroy(self->scrape_duration);
+	err += prom_metric_formatter_destroy(self->metric_formatter);
+	err += prom_string_builder_destroy(self->string_builder);
+	err += pthread_rwlock_destroy(self->lock);
+	prom_free(self->lock);
+	prom_free((char *)self->name);
+	prom_free(self);
+	return err;
 }
 
 int prom_collector_registry_register_metric(prom_metric_t *metric) {
-  PROM_ASSERT(metric != NULL);
+	PROM_ASSERT(metric != NULL);
 
 	prom_collector_t *default_collector = (prom_collector_t *)
-		prom_map_get(PROM_COLLECTOR_REGISTRY->collectors, "default");
+		prom_map_get(PROM_COLLECTOR_REGISTRY->collectors,
+			COLLECTOR_NAME_DEFAULT);
 
-  if (default_collector == NULL) {
-    return 1;
-  }
+	if (default_collector == NULL)
+		return 1;
 
-  return prom_collector_add_metric(default_collector, metric);
+	return prom_collector_add_metric(default_collector, metric);
 }
 
 prom_metric_t *prom_collector_registry_must_register_metric(prom_metric_t *metric) {
@@ -226,7 +281,26 @@ int prom_collector_registry_validate_metric_name(prom_collector_registry_t *self
 }
 
 const char *prom_collector_registry_bridge(prom_collector_registry_t *self) {
-  prom_metric_formatter_clear(self->metric_formatter);
-  prom_metric_formatter_load_metrics(self->metric_formatter, self->collectors);
-  return (const char *)prom_metric_formatter_dump(self->metric_formatter);
+	struct timespec start, end;
+	static const char *labels[] = { METRIC_LABEL_SCRAPE };
+	bool scrape = (self->scrape_duration != NULL)
+		&& (self->features & PROM_SCRAPETIME);
+
+	if (scrape)
+		clock_gettime(CLOCK_MONOTONIC, &start);
+
+	prom_metric_formatter_clear(self->metric_formatter);
+	prom_metric_formatter_load_metrics(self->metric_formatter, self->collectors,
+		 (self->features & PROM_SCRAPETIME_ALL) ? self->scrape_duration : NULL);
+
+	if (scrape) {
+		int r = clock_gettime(CLOCK_MONOTONIC, &end);
+		time_t s = (r == 0) ? end.tv_sec - start.tv_sec : 0;
+		long ns = (r == 0) ? end.tv_nsec - start.tv_nsec : 0;
+		double duration = s + ns*1e-9;
+		prom_gauge_set(self->scrape_duration, duration, labels);
+		prom_metric_formatter_load_metric(self->metric_formatter,
+			self->scrape_duration);
+	}
+	return (const char *) prom_metric_formatter_dump(self->metric_formatter);
 }

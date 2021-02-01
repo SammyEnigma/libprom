@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +34,7 @@ prom_gauge_t *prom_gauge_new(const char *name, const char *help, size_t label_ke
 }
 
 int prom_gauge_destroy(prom_gauge_t *self) {
-  PROM_ASSERT(self != NULL);
-  int r = 0;
-  r = prom_metric_destroy(self);
-  self = NULL;
-  return r;
+	return  (self == NULL) ? 0 : prom_metric_destroy(self);
 }
 
 int prom_gauge_inc(prom_gauge_t *self, const char **label_values) {

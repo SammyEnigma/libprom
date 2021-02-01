@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +70,7 @@ int prom_metric_formatter_load_metric(prom_metric_formatter_t *self, prom_metric
 /**
  * @brief API PRIVATE Loads the given metrics
  */
-int prom_metric_formatter_load_metrics(prom_metric_formatter_t *self, prom_map_t *collectors);
+int prom_metric_formatter_load_metrics(prom_metric_formatter_t *self, prom_map_t *collectors, prom_metric_t *scrape_metric);
 
 /**
  * @brief API PRIVATE Clear the underlying string_builder
