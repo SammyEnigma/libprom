@@ -171,6 +171,8 @@ prom_collector_registry_init(PROM_INIT_FLAGS features, const char *mprefix) {
 	} else {
 		if (features & PROM_SCRAPETIME_ALL)
 			PROM_COLLECTOR_REGISTRY->features |= PROM_SCRAPETIME_ALL;
+		if (features & PROM_COMPACT)
+			PROM_COLLECTOR_REGISTRY->features |= PROM_COMPACT;
 		PROM_COLLECTOR_REGISTRY->mprefix = (mprefix==NULL||strlen(mprefix)==0)
 			? NULL
 			: prom_strdup(mprefix);
@@ -294,6 +296,7 @@ const char *prom_collector_registry_bridge(prom_collector_registry_t *self) {
 	static const char *labels[] = { METRIC_LABEL_SCRAPE };
 	bool scrape = (self->scrape_duration != NULL)
 		&& (self->features & PROM_SCRAPETIME);
+	bool compact = (self->features & PROM_COMPACT) ? true : false;
 
 	if (scrape)
 		clock_gettime(CLOCK_MONOTONIC, &start);
@@ -301,7 +304,7 @@ const char *prom_collector_registry_bridge(prom_collector_registry_t *self) {
 	prom_metric_formatter_clear(self->metric_formatter);
 	prom_metric_formatter_load_metrics(self->metric_formatter, self->collectors,
 		 (self->features & PROM_SCRAPETIME_ALL) ? self->scrape_duration : NULL,
-		 self->mprefix);
+		 self->mprefix, compact);
 
 	if (scrape) {
 		int r = clock_gettime(CLOCK_MONOTONIC, &end);
@@ -310,7 +313,7 @@ const char *prom_collector_registry_bridge(prom_collector_registry_t *self) {
 		double duration = s + ns*1e-9;
 		prom_gauge_set(self->scrape_duration, duration, labels);
 		prom_metric_formatter_load_metric(self->metric_formatter,
-			self->scrape_duration, self->mprefix);
+			self->scrape_duration, self->mprefix, compact);
 	}
 	return (const char *) prom_metric_formatter_dump(self->metric_formatter);
 }

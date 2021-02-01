@@ -110,6 +110,12 @@ void test_prom_collector_registry_bridge(void) {
 	}
 
 	free((char *)result);
+
+	PROM_COLLECTOR_REGISTRY->features |= PROM_COMPACT;
+	result = prom_collector_registry_bridge(PROM_COLLECTOR_REGISTRY);
+	TEST_ASSERT_NULL_MESSAGE(strstr(result, "# HELP"),"dump contains '# HELP'");
+	TEST_ASSERT_NULL_MESSAGE(strstr(result, "# TYPE"),"dump contains '# TYPE'");
+
 	prom_registry_test_destroy();
 }
 
@@ -133,11 +139,11 @@ void test_prom_collector_registry_default_init(void) {
 
 
 	TEST_ASSERT_EQUAL_INT_MESSAGE(0,
-		prom_collector_registry_init(PROM_NONE, NULL),
+		prom_collector_registry_init(PROM_NONE|PROM_COMPACT, NULL),
 		"default_init() failed");
 	pr = PROM_COLLECTOR_REGISTRY;
 	TEST_ASSERT_NOT_NULL_MESSAGE(pr, "PROM_COLLECTOR_REGISTRY not set");
-	TEST_ASSERT_EQUAL_INT_MESSAGE(0, pr->features,
+	TEST_ASSERT_EQUAL_INT_MESSAGE(PROM_COMPACT, pr->features,
 		"Unexpected pr->features value");
 	TEST_ASSERT_NULL_MESSAGE(pr->mprefix, "pr->mprefix");
 	TEST_ASSERT_NULL_MESSAGE(pr->scrape_duration,

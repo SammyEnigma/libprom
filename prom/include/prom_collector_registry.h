@@ -64,7 +64,12 @@ enum prom_init_flag {
 	/** Implies \c PROM_SCRAPETIME, but measures and dumps the dump time of
 		every single collector as well. The related metrics get labeled with
 		the name of the collector. */
-	PROM_SCRAPETIME_ALL = 4
+	PROM_SCRAPETIME_ALL = 4,
+	/** Omit any "# HELP" and \c "# TYPE" lines in metric exports. These are
+		wrt. the Prometheus exposition format optional and e.g. Victoria-Metrics
+		vmagent as well as timeseries DB ignore them completely because simply
+		not needed. So allows less trash and communication overhead. */
+	PROM_COMPACT = 8
 };
 
 /** @brief collection of prom collector registry features.

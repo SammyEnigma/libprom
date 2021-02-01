@@ -59,7 +59,7 @@ void test_prom_metric_formatter_load_metric(void) {
   prom_metric_sample_add(s_a, 2.3);
   prom_metric_sample_t *s_b = prom_metric_sample_from_labels(m, sample_b);
   prom_metric_sample_add(s_b, 4.6);
-  prom_metric_formatter_load_metric(mf, m, "");
+  prom_metric_formatter_load_metric(mf, m, "", false);
   const char *result = prom_metric_formatter_dump(mf);
 
   char *substr =
@@ -94,7 +94,7 @@ void test_prom_metric_formatter_load_metrics(void) {
   prom_collector_registry_register_metric(m_a);
   prom_collector_registry_register_metric(m_b);
   prom_metric_formatter_load_metrics(mf, PROM_COLLECTOR_REGISTRY->collectors,
-	NULL, "");
+	NULL, "", false);
 
   const char *result = prom_metric_formatter_dump(mf);
   const char *expected[] = {

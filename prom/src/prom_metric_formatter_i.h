@@ -20,6 +20,8 @@
 #ifndef PROM_METRIC_FORMATTER_I_H
 #define PROM_METRIC_FORMATTER_I_H
 
+#include <stdbool.h>
+
 // Private
 #include "prom_metric_formatter_t.h"
 #include "prom_metric_t.h"
@@ -64,12 +66,12 @@ int prom_metric_formatter_load_sample(prom_metric_formatter_t *metric_formatter,
 /**
  * @brief API PRIVATE Loads a metric in the string exposition format
  */
-int prom_metric_formatter_load_metric(prom_metric_formatter_t *self, prom_metric_t *metric, const char *prefix);
+int prom_metric_formatter_load_metric(prom_metric_formatter_t *self, prom_metric_t *metric, const char *prefix, bool compact);
 
 /**
  * @brief API PRIVATE Loads the given metrics
  */
-int prom_metric_formatter_load_metrics(prom_metric_formatter_t *self, prom_map_t *collectors, prom_metric_t *scrape_metric, const char *prefix);
+int prom_metric_formatter_load_metrics(prom_metric_formatter_t *self, prom_map_t *collectors, prom_metric_t *scrape_metric, const char *prefix, bool compact);
 
 /**
  * @brief API PRIVATE Clear the underlying string_builder

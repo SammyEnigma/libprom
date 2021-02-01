@@ -199,16 +199,18 @@ prom_metric_formatter_dump(prom_metric_formatter_t *self) {
 
 int
 prom_metric_formatter_load_metric(prom_metric_formatter_t *self,
-	prom_metric_t *metric, const char *prefix)
+	prom_metric_t *metric, const char *prefix, bool compact)
 {
 	if (self == NULL)
 		return 1;
 	const char *p = (prefix != NULL && strlen(prefix) == 0) ? NULL : prefix;
 
-	if (prom_metric_formatter_load_help(self, p, metric->name, metric->help))
-		return 2;
-	if (prom_metric_formatter_load_type(self, p, metric->name, metric->type))
-		return 3;
+	if (!compact) {
+		if (prom_metric_formatter_load_help(self,p,metric->name,metric->help))
+			return 2;
+		if (prom_metric_formatter_load_type(self,p,metric->name,metric->type))
+			return 3;
+	}
 	for (prom_linked_list_node_t *current_node = metric->samples->keys->head;
 		current_node != NULL; current_node = current_node->next)
 	{
@@ -245,7 +247,8 @@ prom_metric_formatter_load_metric(prom_metric_formatter_t *self,
 
 int
 prom_metric_formatter_load_metrics(prom_metric_formatter_t *self,
-	prom_map_t *collectors, prom_metric_t *scrape_metric, const char *mprefix)
+	prom_map_t *collectors, prom_metric_t *scrape_metric, const char *mprefix,
+	bool compact)
 {
 	PROM_ASSERT(self != NULL);
 	int r = 0;
@@ -283,7 +286,7 @@ prom_metric_formatter_load_metrics(prom_metric_formatter_t *self,
 				r++;
 				continue;
 			}
-			r += prom_metric_formatter_load_metric(self, metric, mprefix);
+			r += prom_metric_formatter_load_metric(self,metric,mprefix,compact);
 		}
 		if (scrape_metric != NULL) {
 			int r = clock_gettime(CLOCK_MONOTONIC, &end);
