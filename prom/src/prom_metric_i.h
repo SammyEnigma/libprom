@@ -22,23 +22,22 @@
 #define PROM_METRIC_I_INCLUDED
 
 /**
- * @brief API PRIVATE Returns a *prom_metric
+ * @brief PRIVATE Returns a *prom_metric
  */
-prom_metric_t *prom_metric_new(prom_metric_type_t type, const char *name, const char *help, size_t label_key_count,
-                               const char **label_keys);
+prom_metric_t *prom_metric_new(prom_metric_type_t type, const char *name, const char *help, size_t label_key_count, const char **label_keys);
 
 /**
- * @brief API PRIVATE Destroys a *prom_metric
+ * @brief PRIVATE Destroys a *prom_metric
  */
 int prom_metric_destroy(prom_metric_t *self);
 
 /**
- * @brief API PRIVATE takes a generic item, casts to a *prom_metric_t and destroys it
+ * @brief PRIVATE Cast given item to *prom_metric_t and destroy it
  */
 int prom_metric_destroy_generic(void *item);
 
 /**
- * @brief API Private takes a generic item, casts to a *prom_metric_t and destroys it. Discards any errors.
+ * @brief PRIVATE Casts given item to *prom_metric_t and destroy it.
  */
 void prom_metric_free_generic(void *item);
 

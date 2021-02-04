@@ -1,5 +1,6 @@
 /*
 Copyright 2019-2020 DigitalOcean Inc.
+Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +20,10 @@ limitations under the License.
 
 #include <stdlib.h>
 
-struct prom_linked_list;
+struct pll;
 /**
  * @brief Provides a generic linked list
  */
-typedef struct prom_linked_list prom_linked_list_t;
+typedef struct pll pll_t;
 
 #endif  // PROM_LIST_H

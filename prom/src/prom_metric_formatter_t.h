@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +20,9 @@
 
 #include "prom_string_builder_t.h"
 
-typedef struct prom_metric_formatter {
-  prom_string_builder_t *string_builder;
-  prom_string_builder_t *err_builder;
-} prom_metric_formatter_t;
+typedef struct pmf {
+	psb_t *string_builder;
+	psb_t *err_builder;
+} pmf_t;
 
 #endif  // PROM_METRIC_FORMATTER_T_H

@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +21,16 @@
 #define PROMTTEST_HELPERS_H
 
 #define PROMTEST_THREAD_POOL_SIZE 5
+#define PORT 8000
+#define ENDPOINT "http://0.0.0.0:8000/metrics"	// keep in sync with PORT
 
-extern struct MHD_Daemon *promtest_daemon;
+struct MHD_Daemon *promtest_daemon;
 
 typedef struct promtest_popen_buf {
-  char *buf;
-  int size;
-  int allocated;
-  FILE *f;
+	char *buf;
+	int size;
+	int allocated;
+	FILE *f;
 } promtest_popen_buf_t;
 
 promtest_popen_buf_t *promtest_popen_buf_new(FILE *f);

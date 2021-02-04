@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,5 +20,6 @@
 
 int prom_process_fds_count(const char *path);
 int prom_process_fds_init(void);
+void prom_process_fds_cleanup(void);
 
 #endif  // PROM_PROESS_FDS_I_INCLUDED

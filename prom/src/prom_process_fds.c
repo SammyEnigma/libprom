@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,43 +31,36 @@
 
 prom_gauge_t *prom_process_open_fds;
 
-int prom_process_fds_count(const char *path) {
-  int count = 0;
-  int r = 0;
-  struct dirent *de;
-  DIR *d;
-  if (path) {
-    d = opendir(path);
-    if (d == NULL) {
-      PROM_LOG(PROM_STDIO_OPEN_DIR_ERROR);
-      return -1;
-    }
-  } else {
-    int pid = (int)getpid();
-    char p[50];
-    sprintf(p, "/proc/%d/fd", pid);
-    d = opendir(p);
-    if (d == NULL) {
-      PROM_LOG(PROM_STDIO_OPEN_DIR_ERROR);
-      return -1;
-    }
-  }
-
-  while ((de = readdir(d)) != NULL) {
-    if (strcmp(".", de->d_name) == 0 || strcmp("..", de->d_name) == 0) {
-      continue;
-    }
-    count++;
-  }
-  r = closedir(d);
-  if (r) {
-    PROM_LOG(PROM_STDIO_CLOSE_DIR_ERROR);
-    return -1;
-  }
-  return count;
+int
+prom_process_fds_init(void) {
+	prom_process_open_fds = prom_gauge_new("process_open_fds",
+		"Number of open file descriptors.", 0, NULL);
+	return 0;
 }
 
-int prom_process_fds_init(void) {
-  prom_process_open_fds = prom_gauge_new("process_open_fds", "Number of open file descriptors.", 0, NULL);
-  return 0;
+void
+prom_process_fds_cleanup(void) {
+	prom_gauge_destroy(prom_process_open_fds);
+	prom_process_open_fds = NULL;
+}
+
+int
+prom_process_fds_count(const char *path) {
+	int count = 0;
+	struct dirent *de;
+	DIR *d = opendir(path == NULL ? "/proc/self/fd" : path);
+
+	if (d == NULL) {
+		PROM_LOG(PROM_STDIO_OPEN_DIR_ERROR);
+		return -1;
+	}
+
+	while ((de = readdir(d)) != NULL) {
+		if (strcmp(".", de->d_name) == 0 || strcmp("..", de->d_name) == 0)
+			continue;
+		count++;
+	}
+	if (closedir(d))
+		PROM_LOG(PROM_STDIO_CLOSE_DIR_ERROR);
+	return count;
 }

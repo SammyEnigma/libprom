@@ -1,5 +1,6 @@
 /*
 Copyright 2019-2020 DigitalOcean Inc.
+Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,18 +23,20 @@ limitations under the License.
 #ifndef PROM_METRIC_SAMPLE_HISOTGRAM_H
 #define PROM_METRIC_SAMPLE_HISOTGRAM_H
 
-struct prom_metric_sample_histogram;
+struct pms_histogram;
 /**
- * @brief A histogram metric sample
+ * @brief A histogram metric sample.
  */
-typedef struct prom_metric_sample_histogram prom_metric_sample_histogram_t;
+typedef struct pms_histogram pms_histogram_t;
 
 /**
- * @brief Observe the double for the given prom_metric_sample_histogram_observe_t
- * @param self The target prom_metric_sample_histogram_t*
- * @param value The value to observe.
- * @return Non-zero integer value upon failure
+ * @brief Find the bucket for the given value in the given prom sample
+ *	metric histogram and increment the sample assigned to it by 1. Furthermore
+ *	update its sum and count sample, if found and appropriate.
+ * @param self		Where to lockup the bucket and sample.
+ * @param value		The value to find.
+ * @return Non-zero integer value upon failure, \c 0 otherwise.
  */
-int prom_metric_sample_histogram_observe(prom_metric_sample_histogram_t *self, double value);
+int pms_histogram_observe(pms_histogram_t *self, double value);
 
 #endif  // PROM_METRIC_SAMPLE_HISOTGRAM_H

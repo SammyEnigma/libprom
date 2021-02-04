@@ -1,6 +1,7 @@
 
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,39 +18,43 @@
 
 #include "prom_test_helpers.h"
 
-void test_prom_histogram_buckets_new(void) {
-  prom_histogram_buckets_t *result = prom_histogram_buckets_new(3, 1.0, 2.0, 3.0);
-  TEST_ASSERT_EQUAL_DOUBLE(1.0, result->upper_bounds[0]);
-  TEST_ASSERT_EQUAL_DOUBLE(2.0, result->upper_bounds[1]);
-  TEST_ASSERT_EQUAL_DOUBLE(3.0, result->upper_bounds[2]);
-  TEST_ASSERT_EQUAL_INT(3, prom_histogram_buckets_count(result));
-  prom_histogram_buckets_destroy(result);
-  result = NULL;
+void
+test_phb_new(void) {
+	phb_t *result = phb_new(3, 1.0, 2.0, 3.0);
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, result->upper_bounds[0]);
+	TEST_ASSERT_EQUAL_DOUBLE(2.0, result->upper_bounds[1]);
+	TEST_ASSERT_EQUAL_DOUBLE(3.0, result->upper_bounds[2]);
+	TEST_ASSERT_EQUAL_INT(3, phb_count(result));
+	phb_destroy(result);
+	result = NULL;
 }
 
-void test_prom_histogram_buckets_linear(void) {
-  prom_histogram_buckets_t *result = prom_histogram_buckets_linear(0.0, 1.5, 3);
-  TEST_ASSERT_EQUAL_DOUBLE(0.0, result->upper_bounds[0]);
-  TEST_ASSERT_EQUAL_DOUBLE(1.5, result->upper_bounds[1]);
-  TEST_ASSERT_EQUAL_DOUBLE(3.0, result->upper_bounds[2]);
-  TEST_ASSERT_EQUAL_INT(3, prom_histogram_buckets_count(result));
-  prom_histogram_buckets_destroy(result);
-  result = NULL;
+void
+test_phb_linear(void) {
+	phb_t *result = phb_linear(0.0, 1.5, 3);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, result->upper_bounds[0]);
+	TEST_ASSERT_EQUAL_DOUBLE(1.5, result->upper_bounds[1]);
+	TEST_ASSERT_EQUAL_DOUBLE(3.0, result->upper_bounds[2]);
+	TEST_ASSERT_EQUAL_INT(3, phb_count(result));
+	phb_destroy(result);
+	result = NULL;
 }
 
-void test_prom_histogram_buckets_expontential(void) {
-  prom_histogram_buckets_t *result = prom_histogram_buckets_exponential(1, 2, 3);
-  TEST_ASSERT_EQUAL_DOUBLE(1.0, result->upper_bounds[0]);
-  TEST_ASSERT_EQUAL_DOUBLE(2.0, result->upper_bounds[1]);
-  TEST_ASSERT_EQUAL_DOUBLE(4.0, result->upper_bounds[2]);
-  TEST_ASSERT_EQUAL_INT(3, prom_histogram_buckets_count(result));
-  prom_histogram_buckets_destroy(result);
+void
+test_phb_expontential(void) {
+	phb_t *result = phb_exponential(1, 2, 3);
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, result->upper_bounds[0]);
+	TEST_ASSERT_EQUAL_DOUBLE(2.0, result->upper_bounds[1]);
+	TEST_ASSERT_EQUAL_DOUBLE(4.0, result->upper_bounds[2]);
+	TEST_ASSERT_EQUAL_INT(3, phb_count(result));
+	phb_destroy(result);
 }
 
-int main(int argc, const char **argv) {
-  UNITY_BEGIN();
-  RUN_TEST(test_prom_histogram_buckets_new);
-  RUN_TEST(test_prom_histogram_buckets_linear);
-  RUN_TEST(test_prom_histogram_buckets_expontential);
-  return UNITY_END();
+int
+main(int argc, const char **argv) {
+	UNITY_BEGIN();
+	RUN_TEST(test_phb_new);
+	RUN_TEST(test_phb_linear);
+	RUN_TEST(test_phb_expontential);
+	return UNITY_END();
 }

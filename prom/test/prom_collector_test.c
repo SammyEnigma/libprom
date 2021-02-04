@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +17,32 @@
 
 #include "prom_test_helpers.h"
 
-void test_prom_collector(void) {
-  prom_collector_t *collector = prom_collector_new("test");
-  prom_counter_t *counter = prom_counter_new("test_counter", "counter under test", 0, NULL);
-  prom_collector_add_metric(collector, counter);
-  prom_map_t *m = collector->collect_fn(collector);
-  TEST_ASSERT_EQUAL_INT(1, prom_map_size(m));
-  prom_collector_destroy(collector);
-  collector = NULL;
+void
+test_prom_collector(void) {
+	prom_collector_t *c = prom_collector_new("test");
+	TEST_ASSERT_NOT_NULL(c);
+	prom_counter_t *counter =
+		prom_counter_new("test_counter", "counter under test", 0, NULL);
+	prom_collector_add_metric(c, counter);
+	prom_map_t *m = c->collect_fn(c);
+	TEST_ASSERT_EQUAL_INT(1, prom_map_size(m));
+	prom_collector_destroy(c);
 }
 
-void test_prom_process_collector(void) {
-  prom_collector_t *collector =
-      prom_collector_process_new("../test/fixtures/limits", "../test/fixtures/stat");
-  prom_map_t *m = collector->collect_fn(collector);
-  TEST_ASSERT_EQUAL_INT(7, prom_map_size(m));
-  prom_collector_destroy(collector);
-  collector = NULL;
+void
+test_prom_process_collector(void) {
+	prom_collector_t *c = prom_collector_process_new("../test/fixtures/limits",
+		"../test/fixtures/stat");
+	TEST_ASSERT_NOT_NULL(c);
+	prom_map_t *m = c->collect_fn(c);
+	TEST_ASSERT_EQUAL_INT(7, prom_map_size(m));
+	prom_collector_destroy(c);
 }
 
-int main(int argc, const char **argv) {
-  UNITY_BEGIN();
-  RUN_TEST(test_prom_collector);
-  RUN_TEST(test_prom_process_collector);
-  return UNITY_END();
+int
+main(int argc, const char **argv) {
+	UNITY_BEGIN();
+	RUN_TEST(test_prom_collector);
+	RUN_TEST(test_prom_process_collector);
+	return UNITY_END();
 }

@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,43 +22,48 @@
 
 #include "prom.h"
 
-struct MHD_Daemon *promtest_daemon;
-
-promtest_popen_buf_t *promtest_popen_buf_new(FILE *f) {
-  promtest_popen_buf_t *self = (promtest_popen_buf_t *)malloc(sizeof(promtest_popen_buf_t));
-  self->buf = malloc(32);
-  self->size = 32;
-  self->allocated = 32;
-  self->f = f;
-  return self;
+promtest_popen_buf_t *
+promtest_popen_buf_new(FILE *f) {
+	promtest_popen_buf_t *self = (promtest_popen_buf_t *)
+		malloc(sizeof(promtest_popen_buf_t));
+	self->buf = malloc(32);
+	self->size = 32;
+	self->allocated = 32;
+	self->f = f;
+	return self;
 }
 
-int promtest_popen_buf_ensure_space(promtest_popen_buf_t *self) {
-  if (self->allocated >= self->size + 1) return 0;
-  while (self->allocated < self->size + 1) self->allocated <<= 1;
-  self->buf = (char *)prom_realloc(self->buf, self->allocated);
-  return 0;
+int
+promtest_popen_buf_ensure_space(promtest_popen_buf_t *self) {
+	if (self->allocated >= self->size + 1)
+		return 0;
+	while (self->allocated < self->size + 1)
+		self->allocated <<= 1;
+	self->buf = (char *) prom_realloc(self->buf, self->allocated);
+	return 0;
 }
 
-int promtest_popen_buf_destroy(promtest_popen_buf_t *self) {
-  if (self == NULL) {
-    return 0;
-  }
-  free((void *)self->buf);
-  self->buf = NULL;
-  free((void *)self);
-  self = NULL;
-  return 0;
+int
+promtest_popen_buf_destroy(promtest_popen_buf_t *self) {
+	if (self == NULL)
+		return 0;
+	free((void *)self->buf);
+	self->buf = NULL;
+	free((void *) self);
+	return 0;
 }
 
-int promtest_popen_buf_read(promtest_popen_buf_t *self) {
-  for (int current_char = fgetc(self->f), i = 0; current_char != EOF; current_char = fgetc(self->f), i++) {
-    promtest_popen_buf_ensure_space(self);
-    self->buf[i] = current_char;
-    self->size++;
-  }
-  promtest_popen_buf_ensure_space(self);
-  self->buf[self->size] = '\0';
-  self->size++;
-  return 0;
+int
+promtest_popen_buf_read(promtest_popen_buf_t *self) {
+	for (int current_char = fgetc(self->f), i = 0; current_char != EOF;
+		current_char = fgetc(self->f), i++)
+	{
+		promtest_popen_buf_ensure_space(self);
+		self->buf[i] = current_char;
+		self->size++;
+	}
+	promtest_popen_buf_ensure_space(self);
+	self->buf[self->size] = '\0';
+	self->size++;
+	return 0;
 }

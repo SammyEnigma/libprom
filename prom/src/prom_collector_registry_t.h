@@ -29,15 +29,15 @@
 #include "prom_metric_formatter_t.h"
 #include "prom_string_builder_t.h"
 
-struct prom_collector_registry {
+struct pcr {
 	const char *name;				/**< name of the registry. Do not modify! */
 	const char *mprefix;			/**< prefix each metric name with this */
 	PROM_INIT_FLAGS features;		/**< enabled registry features */
 	prom_metric_t *scrape_duration;	/**< scrape duration metric to use */
 	prom_map_t *collectors;			/**< Map of collectors keyed by name */
-	prom_string_builder_t *string_builder;		/**< string building */
-	prom_metric_formatter_t *metric_formatter;	/**< export metric(s) */
-	pthread_rwlock_t *lock;	/**< mutex to guard concurrent modfications */
+	psb_t *string_builder;			/**< string building */
+	pmf_t *metric_formatter;		/**< export metric(s) */
+	pthread_rwlock_t *lock;		/**< mutex to guard concurrent modfications */
 };
 
 #endif  // PROM_REGISTRY_T_H

@@ -30,29 +30,36 @@
 #include "prom_metric_formatter_t.h"
 
 /**
- * @brief API PRIVATE Contains metric type constants
+ * @brief PRIVATE Contains metric type constants
  */
-typedef enum prom_metric_type { PROM_COUNTER, PROM_GAUGE, PROM_HISTOGRAM, PROM_SUMMARY, PROM_UNTYPED } prom_metric_type_t;
+typedef enum prom_metric_type {
+	PROM_COUNTER,
+	PROM_GAUGE,
+	PROM_HISTOGRAM,
+	PROM_SUMMARY,
+	PROM_UNTYPED
+} prom_metric_type_t;
 
 /**
- * @brief API PRIVATE Maps metric type constants to human readable string values
+ * @brief PRIVATE Maps metric type constants to human readable string values
  */
 extern char *prom_metric_type_map[5];
 
 /**
- * @brief API PRIVATE An opaque struct to users containing metric metadata; one or more metric samples; and a metric
- * formatter for locating metric samples and exporting metric data
+ * @brief PRIVATE An opaque struct to users containing metric metadata; one or
+ *	more metric samples; and a metric formatter for locating metric samples
+ *	and exporting metric data
  */
 struct prom_metric {
-  prom_metric_type_t type;            /**< metric_type      The type of metric */
-  const char *name;                   /**< name             The name of the metric */
-  const char *help;                   /**< help             The help output for the metric */
-  prom_map_t *samples;                /**< samples          Map comprised of samples for the given metric */
-  prom_histogram_buckets_t *buckets;  /**< buckets          Array of histogram bucket upper bound values */
-  size_t label_key_count;             /**< label_keys_count The count of labe_keys*/
-  prom_metric_formatter_t *formatter; /**< formatter        The metric formatter  */
-  pthread_rwlock_t *rwlock;           /**< rwlock           Required for locking on certain non-atomic operations */
-  const char **label_keys;            /**< labels           Array comprised of const char **/
+	prom_metric_type_t type;	/**< metric type */
+	const char *name;			/**< metric name */
+	const char *help;			/**< metric help */
+	prom_map_t *samples;		/**< collected samples */
+	phb_t *buckets;				/**< histogram bucket upper bound values */
+	size_t label_key_count;		/**< number of labels */
+	pmf_t *formatter;			/**< metric formatter  */
+	pthread_rwlock_t *rwlock;	/**< lock support non-atomic ops */
+	const char **label_keys;	/**< labels **/
 };
 
 #endif  // PROM_METRIC_T_H

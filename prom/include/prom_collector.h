@@ -1,5 +1,6 @@
 /*
 Copyright 2019-2020 DigitalOcean Inc.
+Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,78 +23,86 @@ limitations under the License.
 
 /**
  * @file prom_collector.h
- * @brief A Prometheus collector returns a collection of metrics
+ * @brief A \c prom_collector is used to collect metrics.
  */
 
 /**
- * @brief A prometheus collector calls collect to prepare metrics and return them to the registry to which it is
- * registered.
+ * @brief A prom collector calls collect to prepare metrics and return
+ * them to the registry to which it is registered.
  */
 typedef struct prom_collector prom_collector_t;
 
 /**
- * @brief The function responsible for preparing metric data and returning metrics for a given collector.
+ * @brief The function used to prepare and return all relevant metrics of the
+ *	given collector ready for Prometheus exposition.
  *
- * If you use the default collector registry, this should not concern you. If you are using a custom collector, you may
- * set this function on your collector to do additional work before returning the contained metrics.
+ * If you use the default collector registry, this should not concern you. If
+ * you are using a custom collector, you may set this function on your
+ * collector to do additional work before returning the contained metrics.
  *
- * @param self The target prom_collector_t*
- * @return The prom_map_t* containing the collected metrics
+ * @param self The collector with the relevant metrics.
+ * @return The metrics to expose.
  */
 typedef prom_map_t *prom_collect_fn(prom_collector_t *self);
 
 /**
  * @brief Create a collector
- * @param name The name of the collector. The name MUST NOT be default or process.
- * @return The constructed prom_collector_t*
+ * @param name	name of the collector.
+ * @note	Name MUST NOT be \c default or \c process.
+ * @return The new collector on success, \c NULL otherwise.
  */
 prom_collector_t *prom_collector_new(const char *name);
 
 /**
- *@brief Construct a prom_collector_t* which includes the default process metrics
- * @param limits_path Pass NULL to discover the path to the /proc/[pid]/limits file associated with process ID assigned
- *                    by the host environment. Otherwise, pass a string to said path.
- * @param stat_path Pass NULL to discover the path to the /proc/[pid]/stat file associated with process ID assigned
- *                  by the host environment. Otherwise, pass a string to said path.
- * @return The constructed prom_collector_t*
+ * @brief Create a prom collector which includes the default process metrics.
+ * @param limits_path	If \c NULL POSIX and OS specific will be used to
+ *	determine limits. Otherwise, read the limits from the given file path -
+ *	ususally used for testing, only.
+ * @param stat_path		If \c NULL POSIX and OS specific will be used to
+ *	determine the stats. Otherwise, read the stats from the given file path -
+ *	ususally used for testing, only.
+ * @return The new collector on success, \c NULL otherwise.
  */
 prom_collector_t *prom_collector_process_new(const char *limits_path, const char *stat_path);
 
 /**
- * @brief Destroy a collector. You MUST set self to NULL after destruction.
- * @param self The target prom_collector_t*
- * @return A non-zero integer value upon failure.
+ * @brief Destroy the given collector.
+ * @param self collector to destroy.
+ * @return A non-zero integer value upon failure, 0 otherwise.
+ * @note No matter what gets returned, you should never use any collector
+ *	passed to this function but set it to \c NULL .
  */
 int prom_collector_destroy(prom_collector_t *self);
 
-/**
- * @brief Frees a collector passed as a void pointer. You MUST set self to NULL after destruction.
- * @param gen The target prom_collector_t* represented as a void*
- */
-void prom_collector_free_generic(void *gen);
 
 /**
- * @brief Destroys a collector passed as a void pointer. You MUST set self to NULL after destruction.
- * @param gen The target prom_collector_t* represented as a void*
- * @return A non-zero integer value upon failure.
+ * @brief Cast the given pointer to \c prom_collector_t and call
+ * \c prom_collector_destroy() with it.
+ * @param gen Collector to destroy.
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
  */
 int prom_collector_destroy_generic(void *gen);
 
 /**
- * @brief Add a metric to a collector
- * @param self The target prom_collector_t*
- * @param metric the prom_metric_t* to add to the prom_collector_t* passed as self.
- * @return A non-zero integer value upon failure.
+ * @brief	Same as \c prom_collector_destroy_generic(), but drops any return
+ * 	codes.
+ */
+void prom_collector_free_generic(void *gen);
+
+/**
+ * @brief Add the given metric to the given collector
+ * @param self Where to add the metric.
+ * @param metric Metric to add.
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
  */
 int prom_collector_add_metric(prom_collector_t *self, prom_metric_t *metric);
 
 /**
- * @brief The collect function is responsible for doing any work involving a set of metrics and then returning them
- *        for metric exposition.
- * @param self The target prom_collector_t*
- * @param fn The prom_collect_fn* which will be responsible for handling any metric collection operations before
- *           returning the collected metrics for exposition.
- * @return A non-zero integer value upon failure.
+ * @brief Set the function, which prepares (if needed) and returns all relevant
+ * metrics of the given collector ready for Prometheus exposition.
+ * @param self	Collector containing the metrics.
+ * @param fn	The function to repare and return the metrics.
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
  */
 int prom_collector_set_collect_fn(prom_collector_t *self, prom_collect_fn *fn);
 

@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +21,10 @@
 #include "prom_metric_sample.h"
 #include "prom_metric_t.h"
 
-struct prom_metric_sample {
-  prom_metric_type_t type; /**< type is the metric type for the sample */
-  char *l_value;           /**< l_value is the full metric name and label set represeted as a string */
-  _Atomic double r_value;  /**< r_value is the value of the metric sample */
+struct pms {
+	prom_metric_type_t type;	/**< metric type for the sample */
+	char *l_value;				/**< full metric name and label set as a str */
+	_Atomic double r_value;		/**< value of the metric sample */
 };
 
 #endif  // PROM_METRIC_SAMPLE_T_H

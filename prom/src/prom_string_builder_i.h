@@ -23,57 +23,74 @@
 #include "prom_string_builder_t.h"
 
 /**
- * API PRIVATE
- * @brief Constructor for prom_string_builder
+ * @brief	Setup a new string builder.
+ * @return A new string builder or \c NULL on error.
+ * @note	NULL params passed to any function to it may trigger a core dump.
  */
-prom_string_builder_t *prom_string_builder_new(void);
+psb_t *psb_new(void);
 
 /**
- * API PRIVATE
- * @brief Destroys a prom_string_builder*
+ * @brief	Destroys the given string builder.
+ * @param self	String builder to destroy.
+ * @return \c 0 .
  */
-int prom_string_builder_destroy(prom_string_builder_t *self);
+int psb_destroy(psb_t *self);
 
 /**
- * API PRIVATE
- * @brief Adds a string
+ * @brief Append the given string to the buffered string of the given
+ *	string builder.
+ * @param self	Where to append the string.
+ * @param str	String to append.
+ * @return \c 0 on success, a number > 0 otherwise.
  */
-int prom_string_builder_add_str(prom_string_builder_t *self, const char *str);
+int psb_add_str(psb_t *self, const char *str);
 
 /**
- * API PRIVATE
- * @brief Adds a char
+ * @brief Append the given character to the buffered string of the given
+ *	string builder.
+ * @param self	Where to append the character.
+ * @param c		Character to append.
+ * @return \c 0 on success, a number > 0 otherwise.
  */
-int prom_string_builder_add_char(prom_string_builder_t *self, char c);
+int psb_add_char(psb_t *self, char c);
 
 /**
- * API PRIVATE
- * @brief Clear the string
+ * @brief Free the allocated string buffer area of the given string builder,
+ * allocate a new one with a default initial size and set its length to \c 0.
+ * @param self	String builder to free.
+ * @return \c 0 on success, a number > 0 otherwise.
  */
-int prom_string_builder_clear(prom_string_builder_t *self);
+int psb_clear(psb_t *self);
 
 /**
- * API PRIVATE
- * @brief Remove data from the end
+ * @brief Set the length of the buffered string of the given string builder
+ *	to the given length and append \c '\0'.
+ * @param self	String builder to truncate.
+ * @param len	The new length of the buffered string. If it is bigger than
+ *	its current length, this function is a no-op.
+ * @return \c 0 on success, a number > 0 otherwise.
  */
-int prom_string_builder_truncate(prom_string_builder_t *self, size_t len);
+int psb_truncate(psb_t *self, size_t len);
 
 /**
- * API PRIVATE
- * @brief Returns the length of the string
+ * @brief Get the length of the buffered string of the given string builder.
+ * @param self	String builder to query.
+ * @return The length of the buffered string.
  */
-size_t prom_string_builder_len(prom_string_builder_t *self);
+size_t psb_len(psb_t *self);
 
 /**
- * API PRIVATE
- * @brief Returns a copy of the string. The returned string must be deallocated when no longer needed.
+ * @brief Get a copy of the buffered string of the given string builder.
+ * @param self	String builder to ask.
+ * @return Metric as string in Prometheus exposition format.
+ * @note	The returned string must be freed when no longer needed.
  */
-char *prom_string_builder_dump(prom_string_builder_t *self);
+char *psb_dump(psb_t *self);
 
 /**
- * API PRIVATE
- * @brief Getter for str member
+ * @brief Get a reference to the buffered string.
+ * @return a string, or \c NULL if not initialized yet.
  */
-char *prom_string_builder_str(prom_string_builder_t *self);
+char *psb_str(psb_t *self);
 
 #endif  // PROM_STRING_BUILDER_I_H

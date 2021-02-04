@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,72 +29,68 @@
 #include "prom_log.h"
 #include "prom_procfs_i.h"
 
-static int prom_procfs_ensure_buf_size(prom_procfs_buf_t *self) {
-  PROM_ASSERT(self != NULL);
-  if (self->allocated >= self->size + 1) return 0;
-  while (self->allocated < self->size + 1) self->allocated <<= 1;
-  self->buf = (char *)prom_realloc(self->buf, self->allocated);
-  return 0;
+static int
+prom_procfs_ensure_buf_size(prom_procfs_buf_t *self) {
+	PROM_ASSERT(self != NULL);
+	if (self->allocated >= self->size + 1)
+		return 0;
+	while (self->allocated < self->size + 1)
+		self->allocated <<= 1;
+	self->buf = (char *) prom_realloc(self->buf, self->allocated);
+	return 0;
 }
 
-prom_procfs_buf_t *prom_procfs_buf_new(const char *path) {
-  int r = 0;
+prom_procfs_buf_t *
+prom_procfs_buf_new(const char *path) {
+	FILE *f = fopen(path, "r");
 
-  FILE *f = fopen(path, "r");
-  char errbuf[100];
+	if (f == NULL) {
+		char errbuf[100];
+		strerror_r(errno, errbuf, 100);
+		PROM_WARN("%s", errbuf);
+		return NULL;
+	}
 
-  if (f == NULL) {
-    strerror_r(errno, errbuf, 100);
-    PROM_LOG(errbuf);
-    return NULL;
-  }
+	unsigned short int initial_size = 32;
+	prom_procfs_buf_t *self = prom_malloc(sizeof(prom_procfs_buf_t));
+	if (self == NULL) {
+		fclose(f);
+		return NULL;
+	}
+	self->buf = prom_malloc(initial_size);
+	if (self->buf == NULL)
+		goto fail;
+	self->size = 0;
+	self->index = 0;
+	self->allocated = initial_size;
 
-#define PROM_PROCFS_BUF_NEW_HANDLE_F_CLOSE(f) \
-  r = fclose(f);                              \
-  if (r) {                                    \
-    strerror_r(errno, errbuf, 100);           \
-    PROM_LOG(errbuf);                         \
-  }
+	for (int c = getc(f), i = 0; c != EOF; c = getc(f), i++) {
+		if (prom_procfs_ensure_buf_size(self))
+			goto fail;
+		self->buf[i] = c;
+		self->size++;
+	}
+	if (prom_procfs_ensure_buf_size(self))
+		goto fail;
 
-  unsigned short int initial_size = 32;
-  prom_procfs_buf_t *self = prom_malloc(sizeof(prom_procfs_buf_t));
-  self->buf = prom_malloc(initial_size);
-  self->size = 0;
-  self->index = 0;
-  self->allocated = initial_size;
+	self->buf[self->size] = '\0';
+	self->size++;
+	fclose(f);
+	return self;
 
-  for (int current_char = getc(f), i = 0; current_char != EOF; current_char = getc(f), i++) {
-    r = prom_procfs_ensure_buf_size(self);
-    if (r) {
-      prom_procfs_buf_destroy(self);
-      self = NULL;
-      PROM_PROCFS_BUF_NEW_HANDLE_F_CLOSE(f);
-      return NULL;
-    }
-    self->buf[i] = current_char;
-    self->size++;
-  }
-  r = prom_procfs_ensure_buf_size(self);
-  if (r) {
-    prom_procfs_buf_destroy(self);
-    self = NULL;
-    PROM_PROCFS_BUF_NEW_HANDLE_F_CLOSE(f);
-    return NULL;
-  }
-
-  self->buf[self->size] = '\0';
-  self->size++;
-
-  PROM_PROCFS_BUF_NEW_HANDLE_F_CLOSE(f);
-  if (r) return NULL;
-  return self;
+fail:
+	fclose(f);
+	prom_procfs_buf_destroy(self);
+	self = NULL;
+	return NULL;
 }
 
-int prom_procfs_buf_destroy(prom_procfs_buf_t *self) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 0;
-  prom_free(self->buf);
-  prom_free(self);
-  self = NULL;
-  return 0;
+int
+prom_procfs_buf_destroy(prom_procfs_buf_t *self) {
+	if (self == NULL)
+		return 0;
+	prom_free(self->buf);
+	self->buf = NULL;
+	prom_free(self);
+	return 0;
 }

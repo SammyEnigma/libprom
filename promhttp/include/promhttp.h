@@ -1,5 +1,6 @@
 /*
  Copyright 2019-2020 DigitalOcean Inc.
+ Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -29,20 +30,20 @@
 #include "prom_collector_registry.h"
 
 /**
- * @brief Sets the active registry for metric scraping.
- *
- * @param active_registery The target prom_collector_registry_t*. If null is passed, the default registry is used.
- *                         The registry MUST be initialized.
+ * @brief	Sets the active registry for metric scraping.
+ * @param registery	The target prom registry to generate the report to send in
+ *	Prometheus exposition format. If NULL is passed, the default registry will
+ *	be used.
+ * @note	The registry MUST be initialized.
  */
-void promhttp_set_active_collector_registry(prom_collector_registry_t *active_registry);
+void promhttp_set_active_collector_registry(pcr_t *registry);
 
 /**
- *  @brief Starts a daemon in the background and returns a pointer to an HMD_Daemon.
+ *  @brief Start a daemon in the background and return a reference to it.
  *
  * References:
  *  * https://www.gnu.org/software/libmicrohttpd/manual/libmicrohttpd.html#microhttpd_002dinit
  *
- * @return struct MHD_Daemon*
+ * @return A reference to the started daemon.
  */
-struct MHD_Daemon *promhttp_start_daemon(unsigned int flags, unsigned short port, MHD_AcceptPolicyCallback apc,
-                                         void *apc_cls);
+struct MHD_Daemon *promhttp_start_daemon(unsigned int flags, unsigned short port, MHD_AcceptPolicyCallback apc, void *apc_cls);

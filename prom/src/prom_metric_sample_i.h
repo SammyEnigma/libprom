@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,29 +22,31 @@
 #define PROM_METRIC_SAMPLE_I_H
 
 /**
- * @brief API PRIVATE Return a prom_metric_sample_t*
+ * @brief PRIVATE Return a pms_t*
  *
  * @param type The type of metric sample
  * @param l_value The entire left value of the metric e.g metric_name{foo="bar"}
  * @param r_value A double representing the value of the sample
  */
-prom_metric_sample_t *prom_metric_sample_new(prom_metric_type_t type, const char *l_value, double r_value);
+pms_t *pms_new(prom_metric_type_t type, const char *l_value, double r_value);
 
 /**
- * @brief API PRIVATE Destroy the prom_metric_sample**
+ * @brief PRIVATE Destroy the pms
  */
-int prom_metric_sample_destroy(prom_metric_sample_t *self);
+int pms_destroy(pms_t *self);
 
 /**
- * @brief API PRIVATE A prom_linked_list_free_item_fn to enable item destruction within a linked list's destructor
+ * @brief PRIVATE A pll_free_item_fn to enable item destruction
+ *	within a linked list's destructor
  */
-int prom_metric_sample_destroy_generic(void *);
+int pms_destroy_generic(void *);
 
 /**
- * @brief API PRIVATE A prom_linked_list_free_item_fn to enable item destruction within a linked list's destructor.
+ * @brief PRIVATE A pll_free_item_fn to enable item destruction
+ *	within a linked list's destructor.
  *
  * This function ignores any errors.
  */
-void prom_metric_sample_free_generic(void *gen);
+void pms_free_generic(void *gen);
 
 #endif  // PROM_METRIC_SAMPLE_I_H

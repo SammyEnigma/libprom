@@ -1,5 +1,6 @@
 /**
  * Copyright 2019 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +21,17 @@
 prom_counter_t *foo_counter;
 prom_gauge_t *foo_gauge;
 
-int foo(int v, const char *label) {
-  int r = 0;
-  r = prom_counter_inc(foo_counter, NULL);
-  if (r) return r;
-  return prom_gauge_add(foo_gauge, v, (const char *[]) { label });
+int
+foo(int v, const char *label) {
+	if (prom_counter_inc(foo_counter, NULL))
+		return 1;
+	return prom_gauge_add(foo_gauge, v, (const char *[]) { label });
 }
 
-void foo_init(void) {
-  foo_counter = prom_collector_registry_must_register_metric(prom_counter_new("foo_counter", "counter for foo", 0, NULL));
-  foo_gauge = prom_collector_registry_must_register_metric(prom_gauge_new("foo_gauge", "gauge for foo", 1, (const char *[]) { "label" }));
+void
+foo_init(void) {
+	foo_counter = pcr_must_register_metric(prom_counter_new("foo_counter",
+		"counter for foo", 0, NULL));
+	foo_gauge = pcr_must_register_metric(prom_gauge_new("foo_gauge",
+		"gauge for foo", 1, (const char *[]) { "label" }));
 }

@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +21,6 @@
 #define PROMTEST_HISTOGRAM_H
 
 extern prom_histogram_t *foo_histogram;
-
-int promtest_histogram_setup(void);
-int promtest_histogram_teardown(void);
-
 void promtest_histogram(void);
 
 #endif  // PROMTEST_HISTOGRAM_H

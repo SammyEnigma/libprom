@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +21,6 @@
 #define PROMTEST_COUNTER_H
 
 extern prom_counter_t *foo_counter;
-
-int promtest_counter_setup(void);
-int promtest_counter_teardown(void);
-
 void promtest_counter(void);
 
 #endif  // PROMTEST_COUNTER_H

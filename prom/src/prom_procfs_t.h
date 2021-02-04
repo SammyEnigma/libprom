@@ -18,10 +18,10 @@
 #define PROM_PROCFS_T_H
 
 typedef struct prom_procfs_buf {
-  size_t allocated;
-  size_t size;
-  size_t index;
-  char *buf;
+	size_t allocated;
+	size_t size;
+	size_t index;
+	char *buf;
 } prom_procfs_buf_t;
 
 #endif  // PROM_PROCFS_T_H

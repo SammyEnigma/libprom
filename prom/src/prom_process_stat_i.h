@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +20,11 @@
 
 #include "prom_process_stat_t.h"
 
-prom_process_stat_file_t *prom_process_stat_file_new(const char *path);
-int prom_process_stat_file_destroy(prom_process_stat_file_t *self);
-prom_process_stat_t *prom_process_stat_new(prom_process_stat_file_t *stat_f);
-int prom_process_stat_destroy(prom_process_stat_t *self);
-int prom_process_stats_init(void);
+pps_file_t *pps_file_new(const char *path);
+int pps_file_destroy(pps_file_t *self);
+pps_t *pps_new(pps_file_t *stat_f);
+int pps_destroy(pps_t *self);
+int pps_init(void);
+void pps_cleanup(void);
 
 #endif  // PROM_PROCESS_STATS_I_H

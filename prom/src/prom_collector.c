@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,246 +37,231 @@
 #include "prom_process_stat_t.h"
 #include "prom_string_builder_i.h"
 
-prom_map_t *prom_collector_default_collect(prom_collector_t *self) { return self->metrics; }
+prom_map_t *
+prom_collector_default_collect(prom_collector_t *self) {
+	return self->metrics;
+}
 
-prom_collector_t *prom_collector_new(const char *name) {
-  int r = 0;
-  prom_collector_t *self = (prom_collector_t *)prom_malloc(sizeof(prom_collector_t));
-  self->name = prom_strdup(name);
-  self->metrics = prom_map_new();
-  if (self->metrics == NULL) {
+prom_collector_t *
+prom_collector_new(const char *name) {
+	prom_collector_t *self = (prom_collector_t *)
+		prom_malloc(sizeof(prom_collector_t));
+	if (self == NULL)
+		return NULL;
+
+	self->name = prom_strdup(name);
+	self->collect_fn = &prom_collector_default_collect;
+	self->string_builder = NULL;
+	self->proc_limits_file_path = NULL;
+	self->proc_stat_file_path = NULL;
+
+	self->metrics = prom_map_new();
+	if (self->metrics == NULL)
+		goto fail;
+	if (prom_map_set_free_value_fn(self->metrics, &prom_metric_free_generic))
+		goto fail;
+	if ((self->string_builder = psb_new()) == NULL)
+		goto fail;
+	return self;
+
+fail:
     prom_collector_destroy(self);
     return NULL;
-  }
-  r = prom_map_set_free_value_fn(self->metrics, &prom_metric_free_generic);
-  if (r) {
-    prom_collector_destroy(self);
-    return NULL;
-  }
-  self->collect_fn = &prom_collector_default_collect;
-  self->string_builder = prom_string_builder_new();
-  if (self->string_builder == NULL) {
-    prom_collector_destroy(self);
-    return NULL;
-  }
-  self->proc_limits_file_path = NULL;
-  self->proc_stat_file_path = NULL;
-  return self;
 }
 
-int prom_collector_destroy(prom_collector_t *self) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 0;
+int
+prom_collector_destroy(prom_collector_t *self) {
+	if (self == NULL)
+		return 0;
 
-  int r = 0;
-  int ret = 0;
+	int r = 0;
 
-  r = prom_map_destroy(self->metrics);
-  if (r) ret = r;
-  self->metrics = NULL;
-
-  r = prom_string_builder_destroy(self->string_builder);
-  if (r) ret = r;
-  self->string_builder = NULL;
-
-  prom_free((char *)self->name);
-  self->name = NULL;
-  prom_free(self);
-  self = NULL;
-
-  return ret;
+	r += prom_map_destroy(self->metrics);
+	self->metrics = NULL;
+	r += psb_destroy(self->string_builder);
+	self->string_builder = NULL;
+	prom_free((char *)self->name);
+	self->name = NULL;
+	prom_free((char *)self->proc_limits_file_path);
+	self->proc_limits_file_path = NULL;
+	prom_free((char *)self->proc_stat_file_path);
+	self->proc_stat_file_path = NULL;
+	self->collect_fn = NULL;
+	prom_free(self);
+	return r;
 }
 
-int prom_collector_destroy_generic(void *gen) {
-  int r = 0;
-  prom_collector_t *self = (prom_collector_t *)gen;
-  r = prom_collector_destroy(self);
-  self = NULL;
-  return r;
+int
+prom_collector_destroy_generic(void *gen) {
+	if (gen == NULL)
+		return 0;
+	prom_collector_t *self = (prom_collector_t *)gen;
+	return prom_collector_destroy(self);
 }
 
-void prom_collector_free_generic(void *gen) {
-  prom_collector_t *self = (prom_collector_t *)gen;
-  prom_collector_destroy(self);
+void
+prom_collector_free_generic(void *gen) {
+	if (gen == NULL)
+		return;
+	prom_collector_t *self = (prom_collector_t *)gen;
+	prom_collector_destroy(self);
 }
 
-int prom_collector_set_collect_fn(prom_collector_t *self, prom_collect_fn *fn) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 1;
-  self->collect_fn = fn;
-  return 0;
+int
+prom_collector_set_collect_fn(prom_collector_t *self, prom_collect_fn *fn) {
+	if (self == NULL)
+		return 1;
+	self->collect_fn = fn;
+	return 0;
 }
 
-int prom_collector_add_metric(prom_collector_t *self, prom_metric_t *metric) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return 1;
-  if (prom_map_get(self->metrics, metric->name) != NULL) {
-    PROM_LOG("metric already found in collector");
-    return 1;
-  }
-  return prom_map_set(self->metrics, metric->name, metric);
+int
+prom_collector_add_metric(prom_collector_t *self, prom_metric_t *metric) {
+	if (self == NULL)
+		return 1;
+	if (prom_map_get(self->metrics, metric->name) != NULL) {
+		PROM_LOG("metric already found in collector");
+		return 1;
+	}
+	return prom_map_set(self->metrics, metric->name, metric);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 // Process Collector
 
-prom_map_t *prom_collector_process_collect(prom_collector_t *self);
+static prom_map_t *pcp_collect(prom_collector_t *self);
 
-prom_collector_t *prom_collector_process_new(const char *limits_path, const char *stat_path) {
-  prom_collector_t *self = prom_collector_new("process");
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return NULL;
+prom_collector_t *
+prom_collector_process_new(const char *limits_path, const char *stat_path) {
+	prom_collector_t *self = prom_collector_new("process");
+	if (self == NULL)
+		return NULL;
 
-  int r = 0;
+	self->proc_limits_file_path =
+		(limits_path == NULL) ? NULL : prom_strdup(limits_path);
+	self->proc_stat_file_path =
+		(stat_path == NULL) ? NULL : prom_strdup(stat_path);
+	self->collect_fn = &pcp_collect;
 
-  self->proc_limits_file_path = limits_path;
-  self->proc_stat_file_path = stat_path;
-  self->collect_fn = &prom_collector_process_collect;
+	if (ppl_init())
+		goto fail;
+	if (pps_init())
+		goto fail;
+	if (prom_process_fds_init())
+		goto fail;
+	if (prom_collector_add_metric(self, prom_process_max_fds))
+		goto fail;
+	if (prom_collector_add_metric(self, prom_process_virtual_memory_max_bytes))
+		goto fail;
+	if (prom_collector_add_metric(self, prom_process_cpu_seconds_total))
+		goto fail;
+	if (prom_collector_add_metric(self, prom_process_virtual_memory_bytes))
+		goto fail;
+	if (prom_collector_add_metric(self, prom_process_rss_memory_bytes))
+		goto fail;
+	if (prom_collector_add_metric(self, prom_process_start_time_seconds))
+		goto fail;
+	if (prom_collector_add_metric(self, prom_process_open_fds))
+		goto fail;
 
-  r = prom_process_limits_init();
-  if (r) return NULL;
+	return self;
 
-  r = prom_process_stats_init();
-  if (r) return NULL;
-
-  r = prom_process_fds_init();
-  if (r) return NULL;
-
-  r = prom_collector_add_metric(self, prom_process_max_fds);
-  if (r) return NULL;
-
-  r = prom_collector_add_metric(self, prom_process_virtual_memory_max_bytes);
-  if (r) return NULL;
-
-  r = prom_collector_add_metric(self, prom_process_cpu_seconds_total);
-  if (r) return NULL;
-
-  r = prom_collector_add_metric(self, prom_process_virtual_memory_bytes);
-  if (r) return NULL;
-
-  r = prom_collector_add_metric(self, prom_process_rss_memory_bytes);
-  if (r) return NULL;
-
-  r = prom_collector_add_metric(self, prom_process_start_time_seconds);
-  if (r) return NULL;
-
-  r = prom_collector_add_metric(self, prom_process_open_fds);
-  if (r) return NULL;
-
-  return self;
+fail:
+	ppl_cleanup();
+	pps_cleanup();
+	prom_process_fds_cleanup();
+	prom_collector_destroy(self);
+	return NULL;
 }
 
-prom_map_t *prom_collector_process_collect(prom_collector_t *self) {
-  PROM_ASSERT(self != NULL);
-  if (self == NULL) return NULL;
+prom_map_t *
+pcp_collect(prom_collector_t *self) {
+	if (self == NULL)
+		return NULL;
 
-  int r = 0;
-  static int PAGE_SZ = 0;
+	static int PAGE_SZ = 0;
 
-  if (PAGE_SZ == 0)
-	  PAGE_SZ = sysconf(_SC_PAGE_SIZE);
+	if (PAGE_SZ == 0)
+		PAGE_SZ = sysconf(_SC_PAGE_SIZE);
 
-  // Allocate and create a *prom_process_limits_file_t
-  prom_process_limits_file_t *limits_f = prom_process_limits_file_new(self->proc_limits_file_path);
-  if (limits_f == NULL) {
-    prom_process_limits_file_destroy(limits_f);
-    return NULL;
-  }
+	// Allocate and create a *ppl_file_t
+	ppl_file_t *limits_f = ppl_file_new(self->proc_limits_file_path);
+	if (limits_f == NULL) {
+		ppl_file_destroy(limits_f);
+		return NULL;
+	}
 
-  // Allocate and create a *prom_map_t from prom_process_limits_file_t. This is the main storage container for the
-  // limits metric data
-  prom_map_t *limits_map = prom_process_limits(limits_f);
-  if (limits_map == NULL) {
-    prom_process_limits_file_destroy(limits_f);
+	// Allocate and create a *prom_map_t from ppl_file_t.
+	// This is the main storage container for the limits metric data
+	prom_map_t *limits_map = ppl(limits_f);
+	if (limits_map == NULL)
+		goto fail;
+
+	// Retrieve the *ppl_row_t for Max open files
+	ppl_row_t *max_fds = (ppl_row_t *)
+		prom_map_get(limits_map, "Max open files");
+	if (max_fds == NULL)
+		goto fail;
+
+	// Retrieve the *ppl_row_t for Max address space
+	ppl_row_t *vmem_max_bytes = (ppl_row_t *)
+		prom_map_get(limits_map, "Max address space");
+	if (vmem_max_bytes == NULL)
+		goto fail;
+
+	// Set the metric values for max_fds and vmem_max_bytes
+	if (prom_gauge_set(prom_process_max_fds, max_fds->soft, NULL))
+		return NULL;
+	if (prom_gauge_set(prom_process_virtual_memory_max_bytes,
+		vmem_max_bytes->soft, NULL))
+	{
+		return NULL;
+	}
+
+	// Allocate and create a *pps_file_t
+	pps_file_t *stat_f =
+		pps_file_new(self->proc_stat_file_path);
+	if (stat_f == NULL) {
+		ppl_file_destroy(limits_f);
+		prom_map_destroy(limits_map);
+		return self->metrics;
+	}
+
+	// Allocate and create a *pps_t from *pps_file_t
+	pps_t *stat = pps_new(stat_f);
+
+	// Set the metrics related to the stat file
+	if (prom_gauge_set(prom_process_cpu_seconds_total,
+		(stat->utime + stat->stime) / sysconf(_SC_CLK_TCK), NULL))
+	{
+		goto fail;
+	}
+	if (prom_gauge_set(prom_process_virtual_memory_bytes, stat->vsize, NULL))
+		goto fail;
+	if (prom_gauge_set(prom_process_rss_memory_bytes, stat->rss*PAGE_SZ, NULL))
+		goto fail;
+	if (prom_gauge_set(prom_process_start_time_seconds, stat->starttime, NULL))
+		goto fail;
+	if (prom_gauge_set(prom_process_open_fds, prom_process_fds_count(NULL), NULL))
+		goto fail;
+
+	// If there is any issue deallocating the following structures, return NULL
+	// to indicate failure
+	if (ppl_file_destroy(limits_f))
+		return NULL;
+	if (prom_map_destroy(limits_map))
+		return NULL;
+	if (pps_file_destroy(stat_f))
+		return NULL;
+	if (pps_destroy(stat))
+		return NULL;
+
+	return self->metrics;
+
+fail:
+    ppl_file_destroy(limits_f);
     prom_map_destroy(limits_map);
+    pps_file_destroy(stat_f);
+    pps_destroy(stat);
     return NULL;
-  }
-
-  // Retrieve the *prom_process_limits_row_t for Max open files
-  prom_process_limits_row_t *max_fds = (prom_process_limits_row_t *)prom_map_get(limits_map, "Max open files");
-  if (max_fds == NULL) {
-    prom_process_limits_file_destroy(limits_f);
-    prom_map_destroy(limits_map);
-    return NULL;
-  }
-
-  // Retrieve the *prom_process_limits_row_t for Max address space
-  prom_process_limits_row_t *virtual_memory_max_bytes =
-      (prom_process_limits_row_t *)prom_map_get(limits_map, "Max address space");
-  if (virtual_memory_max_bytes == NULL) {
-    prom_process_limits_file_destroy(limits_f);
-    prom_map_destroy(limits_map);
-    return NULL;
-  }
-
-  // Set the metric values for max_fds and virtual_memory_max_bytes
-  r = prom_gauge_set(prom_process_max_fds, max_fds->soft, NULL);
-  if (r) return NULL;
-  r = prom_gauge_set(prom_process_virtual_memory_max_bytes, virtual_memory_max_bytes->soft, NULL);
-  if (r) return NULL;
-
-  // Aloocate and create a *prom_process_stat_file_t
-  prom_process_stat_file_t *stat_f = prom_process_stat_file_new(self->proc_stat_file_path);
-  if (stat_f == NULL) {
-    prom_process_limits_file_destroy(limits_f);
-    prom_map_destroy(limits_map);
-    return self->metrics;
-  }
-
-  // Allocate and create a *prom_process_stat_t from *prom_process_stat_file_t
-  prom_process_stat_t *stat = prom_process_stat_new(stat_f);
-
-  // Set the metrics related to the stat file
-  r = prom_gauge_set(prom_process_cpu_seconds_total, ((stat->utime + stat->stime) / sysconf(_SC_CLK_TCK)), NULL);
-  if (r) {
-    prom_process_limits_file_destroy(limits_f);
-    prom_map_destroy(limits_map);
-    prom_process_stat_file_destroy(stat_f);
-    prom_process_stat_destroy(stat);
-    return NULL;
-  }
-  r = prom_gauge_set(prom_process_virtual_memory_bytes, stat->vsize, NULL);
-  if (r) {
-    prom_process_limits_file_destroy(limits_f);
-    prom_map_destroy(limits_map);
-    prom_process_stat_file_destroy(stat_f);
-    prom_process_stat_destroy(stat);
-    return NULL;
-  }
-  r = prom_gauge_set(prom_process_rss_memory_bytes, stat->rss*PAGE_SZ, NULL);
-  if (r) {
-    prom_process_limits_file_destroy(limits_f);
-    prom_map_destroy(limits_map);
-    prom_process_stat_file_destroy(stat_f);
-    prom_process_stat_destroy(stat);
-    return NULL;
-  }
-  r = prom_gauge_set(prom_process_start_time_seconds, stat->starttime, NULL);
-  if (r) {
-    prom_process_limits_file_destroy(limits_f);
-    prom_map_destroy(limits_map);
-    prom_process_stat_file_destroy(stat_f);
-    prom_process_stat_destroy(stat);
-    return NULL;
-  }
-  r = prom_gauge_set(prom_process_open_fds, prom_process_fds_count(NULL), NULL);
-  if (r) {
-    prom_process_limits_file_destroy(limits_f);
-    prom_map_destroy(limits_map);
-    prom_process_stat_file_destroy(stat_f);
-    prom_process_stat_destroy(stat);
-    return NULL;
-  }
-
-  // If there is any issue deallocating the following structures, return NULL to indicate failure
-  r = prom_process_limits_file_destroy(limits_f);
-  if (r) return NULL;
-  r = prom_map_destroy(limits_map);
-  if (r) return NULL;
-  r = prom_process_stat_file_destroy(stat_f);
-  if (r) return NULL;
-  r = prom_process_stat_destroy(stat);
-  if (r) return NULL;
-
-  return self->metrics;
 }

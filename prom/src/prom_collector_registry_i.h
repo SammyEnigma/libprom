@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +20,6 @@
 #ifndef PROM_COLLECTOR_REGISTRY_I_INCLUDED
 #define PROM_COLLECTOR_REGISTRY_I_INCLUDED
 
-int prom_collector_registry_enable_custom_process_metrics(prom_collector_registry_t *self,
-                                                          const char *process_limits_path,
-                                                          const char *process_stats_path);
+int pcr_enable_custom_process_metrics(pcr_t *self, const char *process_limits_path, const char *process_stats_path);
 
 #endif  // PROM_COLLECTOR_REGISTRY_I_INCLUDED

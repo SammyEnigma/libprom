@@ -27,60 +27,60 @@
 #include "prom_metric_t.h"
 
 /**
- * @brief API PRIVATE prom_metric_formatter constructor
+ * @brief PRIVATE prom_metric_formatter constructor
  */
-prom_metric_formatter_t *prom_metric_formatter_new();
+pmf_t *pmf_new();
 
 /**
- * @brief API PRIVATE prom_metric_formatter destructor
+ * @brief PRIVATE prom_metric_formatter destructor
  */
-int prom_metric_formatter_destroy(prom_metric_formatter_t *self);
+int pmf_destroy(pmf_t *self);
 
 /**
- * @brief API PRIVATE Loads the help text
+ * @brief PRIVATE Loads the help text
  */
-int prom_metric_formatter_load_help(prom_metric_formatter_t *self, const char *prefix, const char *name, const char *help);
+int pmf_load_help(pmf_t *self, const char *prefix, const char *name, const char *help);
 
 /**
- * @brief API PRIVATE Loads the type text
+ * @brief PRIVATE Loads the type text
  */
-int prom_metric_formatter_load_type(prom_metric_formatter_t *self, const char *prefix, const char *name, prom_metric_type_t metric_type);
+int pmf_load_type(pmf_t *self, const char *prefix, const char *name, prom_metric_type_t metric_type);
 
 /**
- * @brief API PRIVATE Loads the formatter with a metric sample L-value
+ * @brief PRIVATE Loads the formatter with a metric sample L-value
  * @param name The metric name
- * @param suffix The metric suffix. This is applicable to Summary and Histogram metric types.
+ * @param suffix The metric suffix for Summary and Histogram metric types.
  * @param label_count The number of labels for the given metric.
  * @param label_keys An array of constant strings.
  * @param label_values An array of constant strings.
  *
  * The number of const char **and prom_label_value must be the same.
  */
-int prom_metric_formatter_load_l_value(prom_metric_formatter_t *metric_formatter, const char *name, const char *suffix, size_t label_count, const char **label_keys, const char **label_values);
+int pmf_load_l_value(pmf_t *metric_formatter, const char *name, const char *suffix, size_t label_count, const char **label_keys, const char **label_values);
 
 /**
- * @brief API PRIVATE Loads the formatter with a metric sample
+ * @brief PRIVATE Loads the formatter with a metric sample
  */
-int prom_metric_formatter_load_sample(prom_metric_formatter_t *metric_formatter, prom_metric_sample_t *sample, const char *prefix);
+int pmf_load_sample(pmf_t *metric_formatter, pms_t *sample, const char *prefix);
 
 /**
- * @brief API PRIVATE Loads a metric in the string exposition format
+ * @brief PRIVATE Loads a metric in the string exposition format
  */
-int prom_metric_formatter_load_metric(prom_metric_formatter_t *self, prom_metric_t *metric, const char *prefix, bool compact);
+int pmf_load_metric(pmf_t *self, prom_metric_t *metric, const char *prefix, bool compact);
 
 /**
- * @brief API PRIVATE Loads the given metrics
+ * @brief PRIVATE Loads the given metrics
  */
-int prom_metric_formatter_load_metrics(prom_metric_formatter_t *self, prom_map_t *collectors, prom_metric_t *scrape_metric, const char *prefix, bool compact);
+int pmf_load_metrics(pmf_t *self, prom_map_t *collectors, prom_metric_t *scrape_metric, const char *prefix, bool compact);
 
 /**
- * @brief API PRIVATE Clear the underlying string_builder
+ * @brief PRIVATE Clear the underlying string_builder
  */
-int prom_metric_formatter_clear(prom_metric_formatter_t *self);
+int pmf_clear(pmf_t *self);
 
 /**
- * @brief API PRIVATE Returns the string built by prom_metric_formatter
+ * @brief PRIVATE Returns the string built by prom_metric_formatter
  */
-char *prom_metric_formatter_dump(prom_metric_formatter_t *metric_formatter);
+char *pmf_dump(pmf_t *metric_formatter);
 
 #endif  // PROM_METRIC_FORMATTER_I_H

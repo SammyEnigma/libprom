@@ -18,125 +18,130 @@
 #include "prom_test_helpers.h"
 #include "prom_collector_registry_i.h"
 
-void test_prom_metric_formatter_load_l_value(void) {
-  prom_metric_formatter_t *mf = prom_metric_formatter_new();
-  const char *keys[] = {"foo", "bar", "bing"};
-  const char *values[] = {"one", "two", "three"};
-  prom_metric_formatter_load_l_value(mf, "test", NULL, 3, keys, values);
-  char *actual = prom_metric_formatter_dump(mf);
-  char *expected = "test{foo=\"one\",bar=\"two\",bing=\"three\"}";
-  TEST_ASSERT_NOT_NULL(strstr(actual, expected));
+void
+test_pmf_load_l_value(void) {
+	pmf_t *mf = pmf_new();
+	const char *keys[] = {"foo", "bar", "bing"};
+	const char *values[] = {"one", "two", "three"};
+	pmf_load_l_value(mf, "test", NULL, 3, keys, values);
+	char *actual = pmf_dump(mf);
+	char *expected = "test{foo=\"one\",bar=\"two\",bing=\"three\"}";
+	TEST_ASSERT_NOT_NULL(strstr(actual, expected));
 
-  free(actual);
-  actual = NULL;
-  prom_metric_formatter_destroy(mf);
-  mf = NULL;
+	free(actual);
+	actual = NULL;
+	pmf_destroy(mf);
+	mf = NULL;
 }
 
-void test_prom_metric_formatter_load_sample(void) {
-  prom_metric_formatter_t *mf = prom_metric_formatter_new();
-  const char *l_value = "test{foo=\"one\",bar=\"two\",bing=\"three\"}";
-  prom_metric_sample_t *sample = prom_metric_sample_new(PROM_COUNTER, l_value, 22.2);
-  prom_metric_formatter_load_sample(mf, sample, NULL);
-  char *actual = prom_metric_formatter_dump(mf);
-  char *expected = "test{foo=\"one\",bar=\"two\",bing=\"three\"}";
-  TEST_ASSERT_NOT_NULL(strstr(actual, expected));
+void
+test_pmf_load_sample(void) {
+	pmf_t *mf = pmf_new();
+	const char *l_value = "test{foo=\"one\",bar=\"two\",bing=\"three\"}";
+	pms_t *sample = pms_new(PROM_COUNTER, l_value, 22.2);
+	pmf_load_sample(mf, sample, NULL);
+	char *actual = pmf_dump(mf);
+	char *expected = "test{foo=\"one\",bar=\"two\",bing=\"three\"}";
+	TEST_ASSERT_NOT_NULL(strstr(actual, expected));
 
-  free(actual);
-  actual = NULL;
-  prom_metric_sample_destroy(sample);
-  prom_metric_formatter_destroy(mf);
-  mf = NULL;
+	free(actual);
+	actual = NULL;
+	pms_destroy(sample);
+	pmf_destroy(mf);
+	mf = NULL;
 }
 
-void test_prom_metric_formatter_load_metric(void) {
-  prom_metric_formatter_t *mf = prom_metric_formatter_new();
-  const char *counter_keys[] = {"foo", "bar"};
-  const char *sample_a[] = {"f", "b"};
-  const char *sample_b[] = {"o", "r"};
-  prom_metric_t *m = prom_metric_new(PROM_COUNTER, "test_counter", "counter under test", 2, counter_keys);
-  prom_metric_sample_t *s_a = prom_metric_sample_from_labels(m, sample_a);
-  prom_metric_sample_add(s_a, 2.3);
-  prom_metric_sample_t *s_b = prom_metric_sample_from_labels(m, sample_b);
-  prom_metric_sample_add(s_b, 4.6);
-  prom_metric_formatter_load_metric(mf, m, "", false);
-  const char *result = prom_metric_formatter_dump(mf);
+void
+test_pmf_load_metric(void) {
+	pmf_t *mf = pmf_new();
+	const char *counter_keys[] = {"foo", "bar"};
+	const char *sample_a[] = {"f", "b"};
+	const char *sample_b[] = {"o", "r"};
+	prom_metric_t *m = prom_metric_new(PROM_COUNTER, "test_counter",
+		"counter under test", 2, counter_keys);
+	pms_t *s_a = pms_from_labels(m, sample_a);
+	pms_add(s_a, 2.3);
+	pms_t *s_b = pms_from_labels(m, sample_b);
+	pms_add(s_b, 4.6);
+	pmf_load_metric(mf, m, "", false);
+	const char *result = pmf_dump(mf);
 
-  char *substr =
-      "# HELP test_counter counter under test\n# TYPE test_counter counter\ntest_counter{foo=\"f\",bar=\"b\"}";
+	char *substr = "# HELP test_counter counter under test\n"
+		"# TYPE test_counter counter\ntest_counter{foo=\"f\",bar=\"b\"}";
 
-  TEST_ASSERT_NOT_NULL(strstr(result, substr));
+	TEST_ASSERT_NOT_NULL(strstr(result, substr));
 
-  substr = "\ntest_counter{foo=\"o\",bar=\"r\"}";
-  TEST_ASSERT_NOT_NULL(strstr(result, substr));
+	substr = "\ntest_counter{foo=\"o\",bar=\"r\"}";
+	TEST_ASSERT_NOT_NULL(strstr(result, substr));
 
-  free((char *)result);
-  result = NULL;
-  prom_metric_destroy(m);
-  m = NULL;
-  prom_metric_formatter_destroy(mf);
-  mf = NULL;
+	free((char *)result);
+	result = NULL;
+	prom_metric_destroy(m);
+	m = NULL;
+	pmf_destroy(mf);
+	mf = NULL;
 }
 
-void test_prom_metric_formatter_load_metrics(void) {
-  int r = 0;
+void
+test_pmf_load_metrics(void) {
+	pmf_t *mf = pmf_new();
+	const char *counter_keys[] = {};
+	pcr_init(PROM_NONE, "");
+	pcr_enable_custom_process_metrics(PROM_COLLECTOR_REGISTRY,
+		"../test/fixtures/limits", "../test/fixtures/stat");
+	prom_metric_t *m_a = prom_metric_new(PROM_COUNTER, "test_counter_a",
+		"counter under test", 0, counter_keys);
+	prom_metric_t *m_b = prom_metric_new(PROM_COUNTER, "test_counter_b",
+		"counter under test", 0, counter_keys);
+	pms_t *s_a = pms_from_labels(m_a, counter_keys);
+	pms_add(s_a, 2.3);
+	pms_t *s_b = pms_from_labels(m_b, counter_keys);
+	pms_add(s_b, 4.6);
+	pcr_register_metric(m_a);
+	pcr_register_metric(m_b);
+	pmf_load_metrics(mf, PROM_COLLECTOR_REGISTRY->collectors,
+		NULL, "", false);
 
-  prom_metric_formatter_t *mf = prom_metric_formatter_new();
-  const char *counter_keys[] = {};
-  prom_collector_registry_init(PROM_NONE, "");
-  prom_collector_registry_enable_custom_process_metrics(PROM_COLLECTOR_REGISTRY, "../test/fixtures/limits", "../test/fixtures/stat");
-  prom_metric_t *m_a = prom_metric_new(PROM_COUNTER, "test_counter_a", "counter under test", 0, counter_keys);
-  prom_metric_t *m_b = prom_metric_new(PROM_COUNTER, "test_counter_b", "counter under test", 0, counter_keys);
-  prom_metric_sample_t *s_a = prom_metric_sample_from_labels(m_a, counter_keys);
-  prom_metric_sample_add(s_a, 2.3);
-  prom_metric_sample_t *s_b = prom_metric_sample_from_labels(m_b, counter_keys);
-  prom_metric_sample_add(s_b, 4.6);
-  prom_collector_registry_register_metric(m_a);
-  prom_collector_registry_register_metric(m_b);
-  prom_metric_formatter_load_metrics(mf, PROM_COLLECTOR_REGISTRY->collectors,
-	NULL, "", false);
+	const char *result = pmf_dump(mf);
+	const char *expected[] = {
+		// from "default" collector
+		"# HELP test_counter_a counter under test",
+		"# TYPE test_counter_a counter",
+		"test_counter_a",
+		"# HELP test_counter_b counter under test",
+		"# TYPE test_counter_b counter",
+		"test_counter_b",
+		// from "process" collector
+		"# HELP process_max_fds Maximum number of open file descriptors.",
+		"# TYPE process_max_fds gauge",
+		"process_max_fds 1048576",
+		"# HELP process_virtual_memory_max_bytes Maximum amount of "
+			"virtual memory available in bytes.",
+		"# TYPE process_virtual_memory_max_bytes gauge",
+		"process_virtual_memory_max_bytes -1"
+	};
 
-  const char *result = prom_metric_formatter_dump(mf);
-  const char *expected[] = {
-	  // from "default" collector
-      "# HELP test_counter_a counter under test",
-      "# TYPE test_counter_a counter",
-      "test_counter_a",
-      "# HELP test_counter_b counter under test",
-      "# TYPE test_counter_b counter",
-      "test_counter_b",
-	  // from "process" collector
-      "# HELP process_max_fds Maximum number of open file descriptors.",
-      "# TYPE process_max_fds gauge",
-      "process_max_fds 1048576",
-      "# HELP process_virtual_memory_max_bytes Maximum amount of virtual memory available in bytes.",
-      "# TYPE process_virtual_memory_max_bytes gauge",
-      "process_virtual_memory_max_bytes -1"};
+	for (int i = 0; i < 12; i++) {
+		TEST_ASSERT_NOT_NULL_MESSAGE(strstr(result, expected[i]), expected[i]);
+	}
 
-  for (int i = 0; i < 12; i++) {
-    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(result, expected[i]), expected[i]);
-  }
+	free((char *) result);
+	result = NULL;
 
-  free((char *)result);
-  result = NULL;
-
-  r = prom_metric_formatter_destroy(mf);
-  if (r) {
-    TEST_FAIL_MESSAGE("Failed to destroy metric formatter");
-  }
-  mf = NULL;
-  r = prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY);
-  if (r) {
-    TEST_FAIL_MESSAGE("Failed to destroy default collector registry");
-  }
-  PROM_COLLECTOR_REGISTRY = NULL;
+	if (pmf_destroy(mf))
+	  TEST_FAIL_MESSAGE("Failed to destroy metric formatter");
+	mf = NULL;
+	if (pcr_destroy(PROM_COLLECTOR_REGISTRY))
+		TEST_FAIL_MESSAGE("Failed to destroy default collector registry");
+	PROM_COLLECTOR_REGISTRY = NULL;
 }
 
-int main(int argc, const char **argv) {
-  UNITY_BEGIN();
-  RUN_TEST(test_prom_metric_formatter_load_l_value);
-  RUN_TEST(test_prom_metric_formatter_load_sample);
-  RUN_TEST(test_prom_metric_formatter_load_metric);
-  RUN_TEST(test_prom_metric_formatter_load_metrics);
-  return UNITY_END();
+int
+main(int argc, const char **argv) {
+	UNITY_BEGIN();
+	RUN_TEST(test_pmf_load_l_value);
+	RUN_TEST(test_pmf_load_sample);
+	RUN_TEST(test_pmf_load_metric);
+	RUN_TEST(test_pmf_load_metrics);
+	return UNITY_END();
 }

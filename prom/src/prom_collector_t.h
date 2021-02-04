@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +23,12 @@
 #include "prom_string_builder_t.h"
 
 struct prom_collector {
-  const char *name;
-  prom_map_t *metrics;
-  prom_collect_fn *collect_fn;
-  prom_string_builder_t *string_builder;
-  const char *proc_limits_file_path;
-  const char *proc_stat_file_path;
+	const char *name;
+	prom_map_t *metrics;
+	prom_collect_fn *collect_fn;
+	psb_t *string_builder;
+	const char *proc_limits_file_path;
+	const char *proc_stat_file_path;
 };
 
 #endif  // PROM_COLLECTOR_T_H

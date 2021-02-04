@@ -1,5 +1,7 @@
 /*
 Copyright 2019-2020 DigitalOcean Inc.
+Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
+
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,39 +24,36 @@ limitations under the License.
 #ifndef PROM_METRIC_SAMPLE_H
 #define PROM_METRIC_SAMPLE_H
 
-struct prom_metric_sample;
+struct pms;
 /**
  * @brief Contains the specific metric and value given the name and label set
+ * @note All operations MUST be called on a sample derived from a gauge metric.
  * Reference: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
  */
-typedef struct prom_metric_sample prom_metric_sample_t;
+typedef struct pms pms_t;
 
 /**
- * @brief Add the r_value to the sample. The value must be greater than or equal to zero.
- * @param self The target prom_metric_sample_t*
- * @param r_value The double to add to prom_metric_sample_t* provided by self
- * @return Non-zero integer value upon failure
+ * @brief Add the given r_value to the given sample.
+ * @param self		Where to add the given value.
+ * @param r_value	Value to add. Must be >= 0.
+ * @return Non-zero integer value upon failure, \c 0 otherwise.
  */
-int prom_metric_sample_add(prom_metric_sample_t *self, double r_value);
+int pms_add(pms_t *self, double r_value);
 
 /**
- * @brief Subtract the r_value from the sample.
- *
- * This operation MUST be called a sample derived from a gauge metric.
- * @param self The target prom_metric_sample_t*
- * @param r_value The double to subtract from the prom_metric_sample_t* provided by self
- * @return Non-zero integer value upon failure
+ * @brief Subtract the given r_value from the given sample.
+ * @param self		Where to add the given value.
+ * @param r_value	Value to substract.
+ * @return Non-zero integer value upon failure, \c 0 otherwise.
  */
-int prom_metric_sample_sub(prom_metric_sample_t *self, double r_value);
+int pms_sub(pms_t *self, double r_value);
 
 /**
- * @brief Set the r_value of the sample.
- *
- * This operation MUST be called on a sample derived from a gauge metric.
- * @param self The target prom_metric_sample_t*
- * @param r_value The double which will be set to the prom_metric_sample_t* provided by self
- * @return Non-zero integer value upon failure
+ * @brief Set the given r_value to the given ample.
+ * @param self		Where to set the given value.
+ * @param r_value	Value to set.
+ * @return Non-zero integer value upon failure, \c 0 otherwise.
  */
-int prom_metric_sample_set(prom_metric_sample_t *self, double r_value);
+int pms_set(pms_t *self, double r_value);
 
 #endif  // PROM_METRIC_SAMPLE_H

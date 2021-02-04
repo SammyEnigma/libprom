@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,24 +25,22 @@
 #include "prom_metric_sample_histogram_t.h"
 
 /**
- * @brief API PRIVATE Create a pointer to a prom_metric_sample_histogram_t
+ * @brief PRIVATE Create a pointer to a pms_histogram_t
  */
-prom_metric_sample_histogram_t *prom_metric_sample_histogram_new(const char *name, prom_histogram_buckets_t *buckets,
-                                                                 size_t label_count, const char **label_keys,
-                                                                 const char **label_vales);
+pms_histogram_t *pms_histogram_new(const char *name, phb_t *buckets, size_t label_count, const char **label_keys, const char **label_vales);
 
 /**
- * @brief API PRIVATE Destroy a prom_metric_sample_histogram_t
+ * @brief PRIVATE Destroy a pms_histogram_t
  */
-int prom_metric_sample_histogram_destroy(prom_metric_sample_histogram_t *self);
+int pms_histogram_destroy(pms_histogram_t *self);
 
 /**
- * @brief API PRIVATE Destroy a void pointer that is cast to a prom_metric_sample_histogram_t*
+ * @brief PRIVATE Cast to a pms_histogram_t* and destroy.
  */
-int prom_metric_sample_histogram_destroy_generic(void *gen);
+int pms_histogram_destroy_generic(void *gen);
 
-char *prom_metric_sample_histogram_bucket_to_str(double bucket);
+char *bucket_to_str(double bucket);
 
-void prom_metric_sample_histogram_free_generic(void *gen);
+void pms_histogram_free_generic(void *gen);
 
 #endif  // PROM_METRIC_HISTOGRAM_SAMPLE_I_H

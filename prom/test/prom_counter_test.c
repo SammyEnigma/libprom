@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,40 +22,42 @@
 const char *sample_labels_a[] = {"f", "b"};
 const char *sample_labels_b[] = {"o", "r"};
 
-void test_counter_inc(void) {
-  prom_counter_t *c = prom_counter_new("test_counter", "counter under test", 2, (const char *[]){"foo", "bar"});
-  TEST_ASSERT(c);
+void
+test_counter_inc(void) {
+	prom_counter_t *c = prom_counter_new("test_counter", "counter under test",
+		2, (const char *[]) {"foo", "bar"});
+	TEST_ASSERT(c);
 
-  prom_counter_inc(c, sample_labels_a);
+	prom_counter_inc(c, sample_labels_a);
+	pms_t *sample = pms_from_labels(c, sample_labels_a);
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, sample->r_value);
 
-  prom_metric_sample_t *sample = prom_metric_sample_from_labels(c, sample_labels_a);
-  TEST_ASSERT_EQUAL_DOUBLE(1.0, sample->r_value);
+	sample = pms_from_labels(c, sample_labels_b);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, sample->r_value);
 
-  sample = prom_metric_sample_from_labels(c, sample_labels_b);
-  TEST_ASSERT_EQUAL_DOUBLE(0.0, sample->r_value);
-
-  prom_counter_destroy(c);
-  c = NULL;
+	prom_counter_destroy(c);
 }
 
-void test_counter_add(void) {
-  prom_counter_t *c = prom_counter_new("test_counter", "counter under test", 2, (const char *[]){"foo", "bar"});
-  TEST_ASSERT(c);
+void
+test_counter_add(void) {
+	prom_counter_t *c = prom_counter_new("test_counter", "counter under test",
+		2, (const char *[]){"foo", "bar"});
+	TEST_ASSERT(c);
 
-  prom_counter_add(c, 100000000.1, sample_labels_a);
-  prom_metric_sample_t *sample = prom_metric_sample_from_labels(c, sample_labels_a);
-  TEST_ASSERT_EQUAL_DOUBLE(100000000.1, sample->r_value);
+	prom_counter_add(c, 100000000.1, sample_labels_a);
+	pms_t *sample = pms_from_labels(c, sample_labels_a);
+	TEST_ASSERT_EQUAL_DOUBLE(100000000.1, sample->r_value);
 
-  sample = prom_metric_sample_from_labels(c, sample_labels_b);
-  TEST_ASSERT_EQUAL_DOUBLE(0.0, sample->r_value);
+	sample = pms_from_labels(c, sample_labels_b);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, sample->r_value);
 
-  prom_counter_destroy(c);
-  c = NULL;
+	prom_counter_destroy(c);
 }
 
-int main(int argc, const char **argv) {
-  UNITY_BEGIN();
-  RUN_TEST(test_counter_inc);
-  RUN_TEST(test_counter_add);
-  return UNITY_END();
+int
+main(int argc, const char **argv) {
+	UNITY_BEGIN();
+	RUN_TEST(test_counter_inc);
+	RUN_TEST(test_counter_add);
+	return UNITY_END();
 }

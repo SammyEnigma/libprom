@@ -29,13 +29,26 @@ limitations under the License.
  * In this brief tutorial you will learn how to create and register metrics,
  * update metric samples, and expose metrics over HTTP.
  *
+ * In the old original version awefully long function and type names were used.
+ * They got renamed for better readability and more compact code. Now the
+ * following prefix abbreviation are used instead of:
+ *
+ *	* pcr .. prom_collector_registry
+ *	* phb .. prom_histogram_buckets
+ *	* pll .. prom_linked_list
+ *	* pmf .. prom_metric_formatter
+ *	* pms .. prom_metric_sample
+ *	* ppl .. prom_process_limits
+ *	* pps .. prom_process_stat[s]
+ *	* psb .. prom_string_builder
+ *
  * @section Creating-and-Registering-Metrics Creating and Registering Metrics
  *
  * First thing to do is to create the prom collector registry.
  * A prom collector registry is basically an associative array of prom
  * collectors keyed by their names. It is recommended to use the default
  * prom collector registry (it has the name "default"). Use
- * \c prom_collector_registry_init() to set it up. Under the hood it also
+ * \c pcr_init() to set it up. Under the hood it also
  * initializes the \c default prom collector, where all your prom metrics alias
  * counters, gauges, histograms will be added by default. If \c PROM_PROCESS
  * gets
@@ -46,17 +59,16 @@ limitations under the License.
  *
  * After that, write a metric initialization function, which creates the
  * required metrics and registers them with the prom collector of choice.
- * Usually one would use the \c prom_collector_registry_must_register_metric()
- * or the \c prom_collector_registry_register_metric() function: It will add
+ * Usually one would use the \c pcr_register_metric() function: It will add
  * the metrics to the \c default prom collector which is registered with the
  * \c default prom collector registry.
  *
  * If one has created his own, non-default prom collector registry using
- * \c prom_collector_registry_new(), one may use
- * \c prom_collector_registry_get() with the name parameter set to \c default
+ * \c pcr_registry_new(), one may use
+ * \c pcr_registry_get() with the name parameter set to \c default
  * to get a reference to its default collector instance, or create a new
- * collector using \c prom_collector_new() and register it with the registry
- * via \c prom_collector_registry_register_collector(). To add metrics to the
+ * collector using \c pcr_new() and register it with the registry
+ * via \c pcr_register_collector(). To add metrics to the
  * related container, use \c prom_collector_add_metric().
  *
  * However, here an easy example, which uses the default prom collector registry
@@ -70,12 +82,12 @@ limitations under the License.
  *
  * void foo_metric_init(void) {
  *      my_counter = prom_counter_new("my_counter", "counts things", 0, NULL);
- *      if (my_counter != NULL && prom_collector_registry_must_register_metric(my_counter))
+ *      if (my_counter != NULL && pcr_register_metric(my_counter))
  *         PROM_INFO("metric '%s' registered.", my_counter->name);
  * }
  *
  * // prefix all metric names with "myapp_" and report the overall scrape time
- * if (prom_collector_registry_init(PROM_PROCESS|PROM_SCRAPETIME, "myapp_")) {
+ * if (pcr_init(PROM_PROCESS|PROM_SCRAPETIME, "myapp_")) {
  *     foo_metric_init();
  * }
  * @endcode
@@ -114,18 +126,18 @@ limitations under the License.
  * registry at a time is active.
  *
  * After firing up the HTTP handler via \c promhttp_start_daemon(), the
- * HTTP handler calls the \c prom_collector_registry_bridge() on \c /metrics
- * request. This in turn instructs the registry's \c prom_metric_formatter_t
+ * HTTP handler calls the \c pcr_bridge() on \c /metrics
+ * request. This in turn instructs the registry's prom metric formatter (pmf)
  * to reset its internal stringbuilder, i.e. clear its buffer via
- * \c prom_metric_formatter_clear() and populate the response by calling
- * \c prom_metric_formatter_load_metrics(). This function calls the
+ * \c pmf_clear() and populate the response by calling
+ * \c pmf_load_metrics(). This function calls the
  * \c collect_fn() function of each registered collector to get the list of
  * metrics to include in the HTTP response. Finally the formatter iterates
  * through the returned list of metrics, and appends them in Prometheus
  * exposition format to its internal stringbuilder. When all prom collectors of
  * the registry have been processed, the contents of the formmatter's
  * stringbuilder gets dumped as a single string via
- * \c prom_metric_formatter_dump() and append to the HTTP response of the
+ * \c pmf_dump() and append to the HTTP response of the
  * request - the http handler takes care of the rest.
  *
  * So basically do something like this:
@@ -149,7 +161,7 @@ limitations under the License.
  * returns the list of registered metrics unless one had set another function
  * to call using \c prom_collector_set_collect_fn(). However, the \c process
  * prom collector automatically created and registered via
- * \c prom_collector_registry_init(PROM_PROCESS, ...) reads in all process
+ * \c pcr_init(PROM_PROCESS, ...) reads in all process
  * related
  * data now, updates the values of the relevant metrics and after that it
  * returns the list of metrics to include iin the response as well.
@@ -168,17 +180,17 @@ limitations under the License.
  * format and export it via HTTP? In this case you do not need libprom but
  * just need to have a look at [promhttp.c](https://github.com/jelmd/libprom/blob/main/promhttp/src/promhttp.c).
  * Copy-and-paste and change the line, where
- * \c prom_collector_registry_bridge(PROM_ACTIVE_REGISTRY) gets called. Replace
+ * \c pcr_bridge(PROM_ACTIVE_REGISTRY) gets called. Replace
  * it with a call to your own function which should return the desired metrics
  * as a string. That's it.
  *
  * But I want to re-use the metrics maintained by the "process" collector.
  *
  * In this case you can do the same as above and use
- * \c prom_collector_registry_init(PROM_PROCESS, ...) to initialize the default
+ * \c pcr_init(PROM_PROCESS, ...) to initialize the default
  * prom registry
  * \c PROM_COLLECTOR_REGISTRY. When it is time to expose the metrics just
- * call \c prom_collector_registry_bridge(PROM_COLLECTOR_REGISTRY) and append
+ * call \c pcr_bridge(PROM_COLLECTOR_REGISTRY) and append
  * the returned string to the output of your own export.
  *
  *

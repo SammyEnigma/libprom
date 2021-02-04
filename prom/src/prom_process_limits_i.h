@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,49 +28,56 @@
  */
 int prom_process_init(void);
 
-prom_process_limits_row_t *prom_process_limits_row_new(const char *limit, const int soft, const int hard,
-                                                       const char *units);
-int prom_process_limits_row_destroy(prom_process_limits_row_t *self);
+ppl_row_t *ppl_row_new(const char *limit, const int soft, const int hard, const char *units);
 
-prom_process_limits_current_row_t *prom_process_limits_current_row_new(void);
-int prom_process_limits_current_row_set_limit(prom_process_limits_current_row_t *self, char *limit);
-int prom_process_limits_current_row_set_units(prom_process_limits_current_row_t *self, char *units);
-int prom_process_limits_current_row_clear(prom_process_limits_current_row_t *self);
-int prom_process_limits_current_row_destroy(prom_process_limits_current_row_t *self);
+int ppl_row_destroy(ppl_row_t *self);
 
-prom_process_limits_file_t *prom_process_limits_file_new(const char *path);
-int prom_process_limits_file_destroy(prom_process_limits_file_t *self);
+ppl_current_row_t *ppl_current_row_new(void);
 
-prom_map_t *prom_process_limits(prom_process_limits_file_t *f);
-bool prom_process_limits_rdp_file(prom_process_limits_file_t *f, prom_map_t *data,
-                                  prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_first_line(prom_process_limits_file_t *f, prom_map_t *data,
-                                        prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_character(prom_process_limits_file_t *f, prom_map_t *data,
-                                       prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_letter(prom_process_limits_file_t *f, prom_map_t *data,
-                                    prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_digit(prom_process_limits_file_t *f, prom_map_t *data,
-                                   prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_data_line(prom_process_limits_file_t *f, prom_map_t *data,
-                                       prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_limit(prom_process_limits_file_t *f, prom_map_t *data,
-                                   prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_word_and_space(prom_process_limits_file_t *f, prom_map_t *data,
-                                            prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_word(prom_process_limits_file_t *f, prom_map_t *data,
-                                  prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_soft_limit(prom_process_limits_file_t *f, prom_map_t *data,
-                                        prom_process_limits_current_row_t *current_row);
-;
-bool prom_process_limits_rdp_hard_limit(prom_process_limits_file_t *f, prom_map_t *data,
-                                        prom_process_limits_current_row_t *current_row);
-bool prom_process_limits_rdp_units(prom_process_limits_file_t *f, prom_map_t *data,
-                                   prom_process_limits_current_row_t *current_row);
+int ppl_current_row_set_limit(ppl_current_row_t *self, char *limit);
 
-int prom_process_limits_rdp_next_token(prom_process_limits_file_t *f);
-bool prom_process_limits_rdp_match(prom_process_limits_file_t *f, const char *token);
+int ppl_current_row_set_units(ppl_current_row_t *self, char *units);
 
-int prom_process_limits_init(void);
+int ppl_current_row_clear(ppl_current_row_t *self);
+
+int ppl_current_row_destroy(ppl_current_row_t *self);
+
+ppl_file_t *ppl_file_new(const char *path);
+
+int ppl_file_destroy(ppl_file_t *self);
+
+prom_map_t *ppl(ppl_file_t *f);
+
+bool ppl_rdp_file(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_first_line(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_character(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_letter(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_digit(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_data_line(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_limit(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_word_and_space(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_word(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_soft_limit(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_hard_limit(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+bool ppl_rdp_units(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
+
+int ppl_rdp_next_token(ppl_file_t *f);
+
+bool ppl_rdp_match(ppl_file_t *f, const char *token);
+
+int ppl_init(void);
+
+void ppl_cleanup(void);
 
 #endif  // PROM_PROCESS_I_H

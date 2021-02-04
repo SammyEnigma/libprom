@@ -1,5 +1,6 @@
 /*
 Copyright 2019-2020 DigitalOcean Inc.
+Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +28,7 @@ limitations under the License.
  */
 
 /**
- * @brief A prometheus counter.
+ * @brief Prometheus metric: counter
  *
  * References
  * * See https://prometheus.io/docs/concepts/metric_types/#counter
@@ -35,68 +36,73 @@ limitations under the License.
 typedef prom_metric_t prom_counter_t;
 
 /**
- * @brief Construct a new prom_counter_t* instance.
- * @param name The name of the metric.
- * @param help The metric description.
- * @param label_key_count The number of labels associated with the given
- *	metric. Pass \c 0 if the metric does not require labels.
+ * @brief Construct a new metric of type \c counter (or short: counter).
+ * @param name	Name of the counter.
+ * @param help	Short counter description.
+ * @param label_key_count	The number of labels associated with the given
+ *	counter. Pass \c 0 if the counter does not require labels.
  * @param label_keys A collection of label keys. The number of keys MUST match
  *	the value passed as \c label_key_count. If no labels are required, pass
  *	\c NULL. Otherwise, it may be convenient to pass this value as a literal.
- * @return A reference to the new prom_counter_t* instance.
+ * @return The new prom counter on success, \c NULL otherwise.
  *
  * *Example*
  *
- *     // An example with labels
- *     prom_counter_new("foo", "foo is a counter with labels", 2, (const char**) { "one", "two" });
+ *	// An example with labels
+ *	prom_counter_new("foo", "foo is a counter with labels", 2, (const char**) { "one", "two" });
  *
- *     // An example without labels
- *     prom_counter_new("foo", "foo is a counter without labels", 0, NULL);
+ *	// An example without labels
+ *	prom_counter_new("foo", "foo is a counter without labels", 0, NULL);
  */
 prom_counter_t *prom_counter_new(const char *name, const char *help, size_t label_key_count, const char **label_keys);
 
 /**
- * @brief Destroys a prom_counter_t*. You must set self to NULL after destruction. A non-zero integer value will be
- *        returned on failure.
- * @param self A prom_counter_t*
- * @return A non-zero integer value upon failure.
+ * @brief Destroys the given counter.
+ * @param self	Counter to destroy.
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
+ * @note No matter what gets returned, you should never use any metric
+ *	passed to this function but set it to \c NULL .
  */
 int prom_counter_destroy(prom_counter_t *self);
 
 /**
- * @brief Increment the prom_counter_t by 1. A non-zero integer value will be returned on failure.
- * @param self The target  prom_counter_t*
- * @param label_values The label values associated with the metric sample being updated. The number of labels must
- *                     match the value passed to label_key_count in the counter's constructor. If no label values are
- *                     necessary, pass NULL. Otherwise, It may be convenient to pass this value as a literal.
- * @return A non-zero integer value upon failure.
+ * @brief Increment the given counter by 1.
+ * @param self	counter to increment.
+ * @param label_values	The label values associated with the counter sample
+ *	being updated. The number of labels must match the value passed as
+ *	\c label_key_count in the counter's constructor. If no label values are
+ *	necessary, pass \c NULL. Otherwise, it may be convenient to pass this value
+ *	as a literal.
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
  *
  * *Example*
  *
- *     // An example with labels
- *     prom_counter_inc(foo_counter, (const char**) { "bar", "bang" });
- **
- *     // An example without labels
- *     prom_counter_inc(foo_counter, NULL);
+ *	// An example with labels
+ *	prom_counter_inc(foo_counter, (const char**) { "bar", "bang" });
+ *
+ *	// An example without labels
+ *	prom_counter_inc(foo_counter, NULL);
  */
 int prom_counter_inc(prom_counter_t *self, const char **label_values);
 
 /**
- * @brief Add the value to the prom_counter_t*. A non-zero integer value will be returned on failure.
- * @param self The target  prom_counter_t*
- * @param r_value The double to add to the prom_counter_t passed as self. The value MUST be greater than or equal to 0.
- * @param label_values The label values associated with the metric sample being updated. The number of labels must
- *                     match the value passed to label_key_count in the counter's constructor. If no label values are
- *                     necessary, pass NULL. Otherwise, It may be convenient to pass this value as a literal.
- * @return A non-zero integer value upon failure.
+ * @brief Add the value to the give counter.
+ * @param self	Where to add the value.
+ * @param r_value	Value to add. MUST be >= 0.
+ * @param label_values	The label values associated with the counter sample
+ *	being updated. The number of labels must match the value passed as
+ *	\c label_key_count in the counter's constructor. If no label values are
+ *	necessary, pass \c NULL. Otherwise, it may be convenient to pass this value
+ *	as a literal.
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
  *
  * *Example*
  *
- *     // An example with labels
- *     prom_counter_add(foo_counter, 22, (const char**) { "bar", "bang" });
+ *	// An example with labels
+ *	prom_counter_add(foo_counter, 22, (const char**) { "bar", "bang" });
  *
- *     // An example without labels
- *     prom_counter_add(foo_counter, 22, NULL);
+ *	// An example without labels
+ *	prom_counter_add(foo_counter, 22, NULL);
  */
 int prom_counter_add(prom_counter_t *self, double r_value, const char **label_values);
 

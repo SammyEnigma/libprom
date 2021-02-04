@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,55 +19,56 @@
 
 const char *l_value = "test{foo=\"bar\"}";
 
-void test_prom_metric_sample_add(void) {
-  prom_metric_sample_t *s = prom_metric_sample_new(PROM_COUNTER, l_value, 0.0);
-  TEST_ASSERT(s);
+void
+test_pms_add(void) {
+	pms_t *s = pms_new(PROM_COUNTER, l_value, 0.0);
+	TEST_ASSERT(s);
 
-  prom_metric_sample_add(s, 2.6);
-  TEST_ASSERT_EQUAL_DOUBLE(2.6, s->r_value);
+	pms_add(s, 2.6);
+	TEST_ASSERT_EQUAL_DOUBLE(2.6, s->r_value);
 
-  prom_metric_sample_add(s, 29.9);
-  TEST_ASSERT_EQUAL_DOUBLE(32.5, s->r_value);
+	pms_add(s, 29.9);
+	TEST_ASSERT_EQUAL_DOUBLE(32.5, s->r_value);
 
-  prom_metric_sample_add(s, 1000001.125);
-  TEST_ASSERT_EQUAL_DOUBLE(1000033.625, s->r_value);
+	pms_add(s, 1000001.125);
+	TEST_ASSERT_EQUAL_DOUBLE(1000033.625, s->r_value);
 
-  prom_metric_sample_destroy(s);
-  s = NULL;
+	pms_destroy(s);
 }
 
-void test_prom_metric_sample_sub(void) {
-  prom_metric_sample_t *s = prom_metric_sample_new(PROM_GAUGE, l_value, 100.1145321);
-  TEST_ASSERT(s);
+void
+test_pms_sub(void) {
+	pms_t *s = pms_new(PROM_GAUGE, l_value, 100.1145321);
+	TEST_ASSERT(s);
 
-  prom_metric_sample_sub(s, 99.91);
-  TEST_ASSERT_EQUAL_DOUBLE(0.20453210000000865, s->r_value);
+	pms_sub(s, 99.91);
+	TEST_ASSERT_EQUAL_DOUBLE(0.20453210000000865, s->r_value);
 
-  prom_metric_sample_sub(s, 0.20453210000000865);
-  TEST_ASSERT_EQUAL_DOUBLE(0.0, s->r_value);
+	pms_sub(s, 0.20453210000000865);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, s->r_value);
 
-  prom_metric_sample_destroy(s);
-  s = NULL;
+	pms_destroy(s);
 }
 
-void test_prom_metric_set(void) {
-  prom_metric_sample_t *s = prom_metric_sample_new(PROM_GAUGE, l_value, 100.1145321);
-  TEST_ASSERT(s);
+void
+test_prom_metric_set(void) {
+	pms_t *s = pms_new(PROM_GAUGE, l_value, 100.1145321);
+	TEST_ASSERT(s);
 
-  prom_metric_sample_set(s, 99.91);
-  TEST_ASSERT_EQUAL_DOUBLE(99.91, s->r_value);
+	pms_set(s, 99.91);
+	TEST_ASSERT_EQUAL_DOUBLE(99.91, s->r_value);
 
-  prom_metric_sample_set(s, 0.20453210000000865);
-  TEST_ASSERT_EQUAL_DOUBLE(0.20453210000000865, s->r_value);
+	pms_set(s, 0.20453210000000865);
+	TEST_ASSERT_EQUAL_DOUBLE(0.20453210000000865, s->r_value);
 
-  prom_metric_sample_destroy(s);
-  s = NULL;
+	pms_destroy(s);
 }
 
-int main(int argc, const char **argv) {
-  UNITY_BEGIN();
-  RUN_TEST(test_prom_metric_sample_add);
-  RUN_TEST(test_prom_metric_sample_sub);
-  RUN_TEST(test_prom_metric_set);
-  return UNITY_END();
+int
+main(int argc, const char **argv) {
+	UNITY_BEGIN();
+	RUN_TEST(test_pms_add);
+	RUN_TEST(test_pms_sub);
+	RUN_TEST(test_prom_metric_set);
+	return UNITY_END();
 }

@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +17,18 @@
 
 #include "prom_test_helpers.h"
 
-void test_prom_procfs_buf(void) {
-  prom_procfs_buf_t *buf = prom_procfs_buf_new("/proc/1/limits");
-  TEST_ASSERT_NOT_NULL(buf);
-  TEST_ASSERT_NOT_NULL(strstr(buf->buf, "Max realtime timeout"));
-  prom_procfs_buf_destroy(buf);
-  buf = NULL;
+void
+test_prom_procfs_buf(void) {
+	prom_procfs_buf_t *buf = prom_procfs_buf_new("/proc/self/limits");
+	TEST_ASSERT_NOT_NULL(buf);
+	TEST_ASSERT_NOT_NULL(strstr(buf->buf, "Max realtime timeout"));
+	prom_procfs_buf_destroy(buf);
+	buf = NULL;
 }
 
-int main(int argc, const char **argv) {
-  UNITY_BEGIN();
-  RUN_TEST(test_prom_procfs_buf);
-  return UNITY_END();
+int
+main(int argc, const char **argv) {
+	UNITY_BEGIN();
+	RUN_TEST(test_prom_procfs_buf);
+	return UNITY_END();
 }

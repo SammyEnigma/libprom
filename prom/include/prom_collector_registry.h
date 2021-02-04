@@ -46,13 +46,13 @@ limitations under the License.
 
 /**
  * @brief flags for the setup of a prom collector registry.
- * @see \c prom_collector_registry_init()
+ * @see \c pcr_init()
  */
 enum prom_init_flag {
 	/** placeholder for \c 0 - implies nothing */
 	PROM_NONE = 0,
 	/** Automatically setup and attach a \c process collector, which collects
-		stats of this process on \c prom_collector_registry_bridge() and
+		stats of this process on \c pcr_bridge() and
 		appends its to the output. */
 	PROM_PROCESS = 1,
 	/** Automatically create and use a metric to monitor the time needed to
@@ -80,26 +80,24 @@ typedef unsigned int PROM_INIT_FLAGS;
 /**
  * @brief A prom_registry_t is responsible for registering metrics and briding them to the string exposition format
  */
-typedef struct prom_collector_registry prom_collector_registry_t;
+typedef struct pcr pcr_t;
 
 /**
- * @brief Initialize the default registry by calling
- *	prom_collector_registry_init() within your program.
+ * @brief Initialize the default registry by calling pcr_init() within your app.
  * @note You MUST NOT modify this value.
  */
-extern prom_collector_registry_t *PROM_COLLECTOR_REGISTRY;
+extern pcr_t *PROM_COLLECTOR_REGISTRY;
 /** @brief backward compatibility to 0.1.3 - will vanish soon. */
 #define PROM_COLLECTOR_REGISTRY_DEFAULT PROM_COLLECTOR_REGISTRY
 
 /**
- * @brief Initializes the default collector registry
+ * @brief Initializes the default collector registry.
  *	\c PROM_COLLECTOR_REGISTRY and enables metric collection on the executing
  *	process and sets the metric name prefix to \c METRIC_LABEL_SCRAPE + "_".
- *	Same as \c prom_collector_registry_init(PROM_PROCESS|PROM_SCRAPETIME,
- *		METRIC_LABEL_SCRAPE "_").
- * @return A non-zero integer value upon failure
+ *	Same as \c pcr_init(PROM_PROCESS|PROM_SCRAPETIME, METRIC_LABEL_SCRAPE "_").
+ * @return A non-zero integer value upon failure. \c 0 otherwise.
  */
-int prom_collector_registry_default_init(void);
+int pcr_default_init(void);
 
 /**
  * @brief Initializes the default collector registry
@@ -111,113 +109,112 @@ int prom_collector_registry_default_init(void);
  *	string when metrics get exposed. E.g. one may use "appname_".
  * @return A non-zero integer value upon failure  - the registry is unusabele.
  */
-int prom_collector_registry_init(PROM_INIT_FLAGS features, const char *mprefix);
+int pcr_init(PROM_INIT_FLAGS features, const char *mprefix);
 
 /**
- * @brief Constructs a prom_collector_registry_t* with one empty collector
- *	named \c default .
- * @param name The name of the collector registry. It MUST NOT be \c default.
- * @return The constructed prom_collector_registry_t*
+ * @brief Constructs a registry named \c default which contains one empty
+ * prom collector named \c default , only.
+ * @param name Name of the collector registry. It MUST NOT be \c default.
+ * @return The new registry on success, \c NULL otherwise.
  */
-prom_collector_registry_t *prom_collector_registry_new(const char *name);
+pcr_t *pcr_new(const char *name);
 
 /**
  * @brief Destroy the given collector registry.
- * @param self The prom_collector_registry_t* to destroy.
- * @return A non-zero integer value upon failure, 0 otherwise. NOTE: no matter
- *	what is returned, one should always set the pointer of the given registry
- *	to \c NULL because it gets always passed to \c free() and thus points to
- *	an invalid memory location on return.
+ * @param self	Registry to destroy.
+ * @return A non-zero integer value upon failure, 0 otherwise.
+ * @note	No matter what is returned, one should always set the pointer of
+ *	the given registry to \c NULL because it gets always passed to \c free()
+ *	and thus points to an invalid memory location on return.
  */
-int prom_collector_registry_destroy(prom_collector_registry_t *self);
+int pcr_destroy(pcr_t *self);
 
 /**
- * @brief Enable process metrics on the given collector registry
- * @param self The target prom_collector_registry_t*
- * @return A non-zero integer value upon failure
+ * @brief Enable process metrics on the given collector registry.
+ * @param self The registry, where to attach the process metrics.
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
  */
-int prom_collector_registry_enable_process_metrics(prom_collector_registry_t *self);
+int pcr_enable_process_metrics(pcr_t *self);
 
 /**
  * @brief Create a scrape duration gauge metric and attach it to the given
- *	prom collector registry. If available, \c prom_collector_registry_bridge()
+ *	prom collector registry. If available, \c pcr_bridge()
  *	measures the time needed to collect and export all metrics of the registry,
  *	updates the metric and appends it to the export.
- * @param self The target prom_collector_registry_t*
+ * @param self Where to enable scrape duration monitoring.
  * @return A non-zero integer if the given registry is \c NULL, or the metric
  *	could not be added to its \c default collector, 0 otherwise.
  */
-int prom_collector_registry_enable_scrape_metrics(prom_collector_registry_t *self);
+int pcr_enable_scrape_metrics(pcr_t *self);
 
 /**
  * @brief Registers a metric with the default collector on
  *	PROM_COLLECTOR_REGISTRY.
  *
  * The metric to be registered MUST NOT already be registered with the given.
- * If so, the function calls exit. It returns a prom_metric_t* to simplify
- * metric creation and registration. Furthermore, PROM_COLLECTOR_REGISTRY must
- * be registered via prom_collector_registry_init() prior to calling
+ * If so, the function calls exit() - probably not what you want! NOTE:
+ * PROM_COLLECTOR_REGISTRY must be registered via pcr_init() prior to calling
  * this function. The metric will be added to the default registry's default
  * collector.
  *
- * @param metric The metric to register on PROM_COLLECTOR_REGISTRY*
- * @return The registered prom_metric_t*
+ * @param metric The metric to register.
+ * @return The registered metric, or \c NULL is registration failed.
  */
-prom_metric_t *prom_collector_registry_must_register_metric(prom_metric_t *metric);
+prom_metric_t *pcr_must_register_metric(prom_metric_t *metric);
 
 /**
  * @brief Registers a metric with the default collector on
  *	PROM_COLLECTOR_REGISTRY.
  *
- * See prom_collector_registry_must_register_metric.
+ * See also: pcr_must_register_metric.
  *
  * @param metric The metric to register on PROM_COLLECTOR_REGISTRY*
  * @return A non-zero integer value upon failure.
  */
-int prom_collector_registry_register_metric(prom_metric_t *metric);
+int pcr_register_metric(prom_metric_t *metric);
 
 /**
  * @brief Register a collector with the given registry. If the registry already
  *	contains a collector with the same name, the registration will fail.
- * @param self The target prom_collector_registry_t* instance.
- * @param collector The prom_collector_t* to register onto the
- *	prom_collector_registry_t* as self.
- * @return A non-zero integer value upon failure.
+ * @param self	Where to register the collector.
+ * @param collector The collector to register.
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
  */
-int prom_collector_registry_register_collector(prom_collector_registry_t *self, prom_collector_t *collector);
+int pcr_register_collector(pcr_t *self, prom_collector_t *collector);
 
 /**
  * @brief Get a reference to the prom collector with the given \a name from
  * the given prom collector registry.
- * @param self The target prom_collector_registry_t*.
- * @param name The name of the collector to lookup.
+ * @param self Registry to query.
+ * @param name Name of the collector to lookup.
  * @return \c NULL if not found, a reference to the related prom collector
  *	otherwise.
  */
-prom_collector_t *prom_collector_registry_get(prom_collector_registry_t *self, const char *name);
+prom_collector_t *pcr_get(pcr_t *self, const char *name);
 
 /**
- * @brief Returns a string in the default metric exposition format. The string MUST be freed to avoid unnecessary heap
- * memory growth.
+ * @brief Export all relevant metrics registered with the given registry in
+ * the default metric exposition format as a single string. This string MUST
+ * be freed to avoid unnecessary heap memory growth.
  *
  * Reference: https://prometheus.io/docs/instrumenting/exposition_formats/
  *
- * @param self The target prom_collector_registry_t*
- * @return The string in the default metric exposition format.
+ * @param self The registry containing the collectors with the relevant metrics.
+ * @return \c NULL on failure, the export otherwise.
  */
-const char *prom_collector_registry_bridge(prom_collector_registry_t *self);
+const char *pcr_bridge(pcr_t *self);
 
 /**
  *@brief Validates that the given metric name complies with the specification:
  *
  * Reference: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
  *
- * Returns a non-zero integer value on failure.
+ * Returns a non-zero integer value on failure, \c 0 otherwise.
  *
- * @param self The target prom_collector_registry_t*
- * @param metric_name The metric name to validate
- * @return A non-zero integer value upon failure
+ * @param self Registry to use.
+ * @param metric_name	Name to validate
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
  */
-int prom_collector_registry_validate_metric_name(prom_collector_registry_t *self, const char *metric_name);
+int pcr_validate_metric_name(pcr_t *self, const char *metric_name);
 
 #endif  // PROM_H

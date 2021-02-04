@@ -1,5 +1,6 @@
 /**
  * Copyright 2019-2020 DigitalOcean Inc.
+ * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +28,13 @@
 #ifndef PROM_METRIC_HISTOGRAM_SAMPLE_T_H
 #define PROM_METRIC_HISTOGRAM_SAMPLE_T_H
 
-struct prom_metric_sample_histogram {
-  prom_linked_list_t *l_value_list;
-  prom_map_t *l_values;
-  prom_map_t *samples;
-  prom_metric_formatter_t *metric_formatter;
-  prom_histogram_buckets_t *buckets;
-  pthread_rwlock_t *rwlock;
+struct pms_histogram {
+	pll_t *l_value_list;
+	prom_map_t *l_values;
+	prom_map_t *samples;
+	pmf_t *metric_formatter;
+	phb_t *buckets;
+	pthread_rwlock_t *rwlock;
 };
 
 #endif  // PROM_METRIC_HISTOGRAM_SAMPLE_T_H

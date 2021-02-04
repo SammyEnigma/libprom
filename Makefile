@@ -11,7 +11,7 @@ prom: CMAKE_EXTRA_OPTS += -DCMAKE_C_FLAGS="-DPROM_LOG_ENABLE"
 
 .PHONY: build test clean distclean docs cleandocs prom promhttp example
 
-all: build docs
+all: build
 
 clean:
 	rm -rf prom/build prom/build.test
@@ -42,7 +42,7 @@ promhttp:
 
 build: prom promhttp
 
-example:
+example: build
 	cd example && make $(MAKE_FLAGS)
 
 docs: cleandocs
