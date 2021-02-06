@@ -27,47 +27,146 @@
 #include "prom_process_stat_t.h"
 #include "prom_procfs_i.h"
 
-prom_gauge_t *prom_process_cpu_seconds_total = NULL;
-prom_gauge_t *prom_process_virtual_memory_bytes = NULL;
-prom_gauge_t *prom_process_rss_memory_bytes = NULL;
-prom_gauge_t *prom_process_start_time_seconds = NULL;
+prom_counter_t *prom_process_minflt = NULL;
+prom_counter_t *prom_process_cminflt = NULL;
+prom_counter_t *prom_process_majflt = NULL;
+prom_counter_t *prom_process_cmajflt = NULL;
+prom_counter_t *prom_process_utime = NULL;
+prom_counter_t *prom_process_stime = NULL;
+prom_counter_t *prom_process_time = NULL;
+prom_counter_t *prom_process_cutime = NULL;
+prom_counter_t *prom_process_cstime = NULL;
+prom_counter_t *prom_process_ctime = NULL;
+prom_gauge_t *prom_process_num_threads = NULL;
+prom_counter_t *prom_process_starttime = NULL;
+prom_gauge_t *prom_process_vsize = NULL;
+prom_gauge_t *prom_process_rss = NULL;
+prom_counter_t *prom_process_blkio = NULL;
 
 /**
  * @brief Initializes each gauge metric
  */
 int
 pps_init(void) {
-	// /proc/self/stat cutime + cstime / 100
-	prom_process_cpu_seconds_total = prom_gauge_new("process_cpu_seconds_total",
-		"Total user and system CPU time spent in seconds.", 0, NULL);
+	// /proc/self/stat Field 10
+	prom_process_minflt = prom_counter_new("process_minor_pagefaults_total",
+		"Number of minor faults of the process "
+		"not caused a page load from disk",
+		0, NULL);
+	// /proc/self/stat Field 11
+	prom_process_cminflt =
+		prom_counter_new("process_minor_pagefaults_children_total",
+		"Number of minor faults of the process waited-for children "
+		"not caused a page load from disk",
+		0, NULL);
+	// /proc/self/stat Field 12
+	prom_process_majflt = prom_counter_new("process_major_pagefaults_total",
+		"Number of major faults of the process "
+		"caused a page load from disk",
+		0, NULL);
+	// /proc/self/stat Field 13
+	prom_process_cmajflt =
+		prom_counter_new("process_major_pagefaults_children_total",
+		"Number of major faults of the process's waited-for children "
+		"caused a page load from disk",
+		0, NULL);
+
+	// /proc/self/stat Field 14
+	prom_process_utime = prom_counter_new("process_cpu_seconds_user_total",
+		"Total CPU time the process spent in user mode in seconds", 0, NULL);
+	// /proc/self/stat Field 15
+	prom_process_stime = prom_counter_new("process_cpu_seconds_system_total",
+		"Total CPU time the process spent in kernel mode in seconds", 0, NULL);
+	// /proc/self/stat Field 14 + 15
+	prom_process_time =
+		prom_counter_new("process_cpu_seconds_total",
+		"Total CPU time the process spent in user and kernel mode in seconds",
+		0, NULL);
+	// /proc/self/stat Field 16
+	prom_process_cutime =
+		prom_counter_new("process_cpu_seconds_user_children_total",
+		"Total CPU time the process's waited-for children spent in user mode "
+	    "in seconds", 0, NULL);
+	// /proc/self/stat Field 17
+	prom_process_cstime =
+		prom_counter_new("process_cpu_seconds_system_children_total",
+		"Total CPU time the process's waited-for children spent in kernel mode "
+	    "in seconds", 0, NULL);
+	// /proc/self/stat Field 16 + 17
+	prom_process_ctime = prom_counter_new("process_cpu_seconds_children_total",
+		"Total CPU time the process's waited-for children spent in user and "
+		"in kernel mode in seconds", 0, NULL);
+
+	// /proc/self/stat Field 20
+	prom_process_num_threads = prom_gauge_new("process_num_threads",
+		"Number of threads in this process", 0, NULL);
+
+	// now - /proc/uptime + /proc/self/stat Field 22
+	prom_process_starttime = prom_counter_new("process_start_time_seconds",
+		"The time the process has been started in seconds elapsed since Epoch",
+		0, NULL);
 
 	// /proc/self/stat Field 23
-	prom_process_virtual_memory_bytes =
-		prom_gauge_new("process_virtual_memory_bytes",
-			"Virtual memory size in bytes.", 0, NULL);
-
+	prom_process_vsize = prom_gauge_new("process_virtual_memory_bytes",
+			"Virtual memory size in bytes", 0, NULL);
 	// /proc/self/stat Field 24
-	prom_process_rss_memory_bytes = prom_gauge_new("process_rss_memory_bytes",
-		"Resident set size of memory in bytes.", 0, NULL);
+	prom_process_rss = prom_gauge_new("process_resident_memory_bytes",
+		"Resident set size of memory in bytes", 0, NULL);
 
-	prom_process_start_time_seconds =
-		prom_gauge_new("process_start_time_seconds",
-			"Start time of the process since unix epoch in seconds.", 0, NULL);
+	// /proc/self/stat Field 25
+	prom_process_blkio = prom_counter_new("process_delayacct_blkio_ticks",
+		"Aggregated block I/O delays, measured in clock ticks (centiseconds)",
+		0, NULL);
 	return 0;
 }
 
 void
 pps_cleanup(void) {
-	prom_gauge_destroy(prom_process_cpu_seconds_total);
-	prom_process_cpu_seconds_total = NULL;
-	prom_gauge_destroy(prom_process_virtual_memory_bytes);
-	prom_process_virtual_memory_bytes = NULL;
-	prom_gauge_destroy(prom_process_rss_memory_bytes);
-	prom_process_rss_memory_bytes = NULL;
-	prom_gauge_destroy(prom_process_start_time_seconds);
-	prom_process_start_time_seconds = NULL;
-}
+	prom_counter_destroy(prom_process_minflt);
+	prom_process_minflt = NULL;
 
+	prom_counter_destroy(prom_process_cminflt);
+	prom_process_cminflt = NULL;
+
+	prom_counter_destroy(prom_process_majflt);
+	prom_process_majflt = NULL;
+
+	prom_counter_destroy(prom_process_cmajflt);
+	prom_process_cmajflt = NULL;
+
+	prom_counter_destroy(prom_process_utime);
+	prom_process_utime = NULL;
+
+	prom_counter_destroy(prom_process_stime);
+	prom_process_stime = NULL;
+
+	prom_counter_destroy(prom_process_time);
+	prom_process_time = NULL;
+
+	prom_counter_destroy(prom_process_cutime);
+	prom_process_cutime = NULL;
+
+	prom_counter_destroy(prom_process_cstime);
+	prom_process_cstime = NULL;
+
+	prom_counter_destroy(prom_process_ctime);
+	prom_process_ctime = NULL;
+
+	prom_gauge_destroy(prom_process_num_threads);
+	prom_process_num_threads = NULL;
+
+	prom_counter_destroy(prom_process_starttime);
+	prom_process_starttime = NULL;
+
+	prom_gauge_destroy(prom_process_vsize);
+	prom_process_vsize = NULL;
+
+	prom_gauge_destroy(prom_process_rss);
+	prom_process_rss = NULL;
+
+	prom_counter_destroy(prom_process_blkio);
+	prom_process_blkio = NULL;
+}
 
 pps_file_t *
 pps_file_new(const char *path) {
@@ -179,7 +278,7 @@ pps_new(pps_file_t *stat_f) {
 		&self->processor,		// (39)
 		&self->rt_priority,		// (40)
 		&self->policy,			// (41)
-		&self->blkio_ticks,		// (42)
+		&self->blkio,			// (42)
 		&self->guest_time,		// (43)
 		&self->cguest_time,		// (44)
 		&self->start_data,		// (45)

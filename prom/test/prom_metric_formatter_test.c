@@ -112,16 +112,13 @@ test_pmf_load_metrics(void) {
 		"# TYPE test_counter_b counter",
 		"test_counter_b",
 		// from "process" collector
-		"# HELP process_max_fds Maximum number of open file descriptors.",
+		"# HELP process_max_fds Maximum number of open file descriptors "
+			"(soft limit)",
 		"# TYPE process_max_fds gauge",
 		"process_max_fds 1048576",
-		"# HELP process_virtual_memory_max_bytes Maximum amount of "
-			"virtual memory available in bytes.",
-		"# TYPE process_virtual_memory_max_bytes gauge",
-		"process_virtual_memory_max_bytes -1"
 	};
 
-	for (int i = 0; i < 12; i++) {
+	for (int i = 0; i < 9; i++) {
 		TEST_ASSERT_NOT_NULL_MESSAGE(strstr(result, expected[i]), expected[i]);
 	}
 

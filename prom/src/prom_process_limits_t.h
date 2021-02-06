@@ -23,7 +23,6 @@
 
 extern prom_gauge_t *prom_process_open_fds;
 extern prom_gauge_t *prom_process_max_fds;
-extern prom_gauge_t *prom_process_virtual_memory_max_bytes;
 
 typedef struct ppl_row {
 	const char *limit;	/**< limit name */

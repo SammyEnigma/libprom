@@ -88,7 +88,8 @@ pms_sub(pms_t *self, double r_value) {
 
 int
 pms_set(pms_t *self, double r_value) {
-	if (self->type != PROM_GAUGE) {
+	if (self->type != PROM_GAUGE && (self->type != PROM_COUNTER || r_value < 0))
+	{
 		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
 		return 1;
 	}

@@ -35,7 +35,8 @@ test_prom_process_collector(void) {
 		"../test/fixtures/stat");
 	TEST_ASSERT_NOT_NULL(c);
 	prom_map_t *m = c->collect_fn(c);
-	TEST_ASSERT_EQUAL_INT(7, prom_map_size(m));
+	TEST_ASSERT_EQUAL_INT_MESSAGE(15 + 1 + 1, prom_map_size(m),
+		"Expected 15 stats + 1 limit + 1 manually");
 	prom_collector_destroy(c);
 }
 

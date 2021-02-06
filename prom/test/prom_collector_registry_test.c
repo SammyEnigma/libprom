@@ -90,7 +90,7 @@ test_pcr_bridge(void) {
 		"# HELP test_counter counter under test",
 		"# TYPE test_counter counter",
 		"test_counter{label=\"foo\"}",
-		"HELP test_gauge gauge under test",
+		"# HELP test_gauge gauge under test",
 		"# TYPE test_gauge gauge",
 		"test_gauge{label=\"foo\"}",
 		"# HELP test_histogram histogram under test",
@@ -99,15 +99,14 @@ test_pcr_bridge(void) {
 		"test_histogram{le=\"+Inf\"}",
 		"test_histogram_count",
 		"test_histogram_sum",
-		"# HELP process_max_fds Maximum number of open file descriptors.",
+		"# HELP process_max_fds Maximum number of open file descriptors "
+			"(soft limit)",
 		"# TYPE process_max_fds gauge",
 		"process_max_fds",
-		"# HELP process_virtual_memory_max_bytes Maximum amount of "
-			"virtual memory available in bytes.",
-		"# TYPE process_virtual_memory_max_bytes"
 	};
 
-	for (int i = 0; i < 17; i++) {
+	fprintf(stderr, "%s\n", result);
+	for (int i = 0; i < 15; i++) {
 		TEST_ASSERT_NOT_NULL_MESSAGE(strstr(result, expected[i]), expected[i]);
 	}
 

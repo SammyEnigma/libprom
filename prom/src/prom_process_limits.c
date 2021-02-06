@@ -50,7 +50,6 @@ typedef enum prom_process_limit_rdp_limit_type {
 	PROM_PROCESS_LIMITS_RDP_HARD
 } prom_process_limit_rdp_limit_type_t;
 
-prom_gauge_t *prom_process_virtual_memory_max_bytes = NULL;
 prom_gauge_t *prom_process_max_fds = NULL;
 
 /**
@@ -59,11 +58,7 @@ prom_gauge_t *prom_process_max_fds = NULL;
 int
 ppl_init(void) {
 	prom_process_max_fds = prom_gauge_new("process_max_fds",
-		"Maximum number of open file descriptors.", 0, NULL);
-
-	prom_process_virtual_memory_max_bytes =
-		prom_gauge_new("process_virtual_memory_max_bytes",
-			"Maximum amount of virtual memory available in bytes.", 0, NULL);
+		"Maximum number of open file descriptors (soft limit)", 0, NULL);
 
 	return 0;
 }
@@ -72,8 +67,6 @@ void
 ppl_cleanup(void) {
 	prom_gauge_destroy(prom_process_max_fds);
 	prom_process_max_fds = NULL;
-	prom_gauge_destroy(prom_process_virtual_memory_max_bytes);
-	prom_process_virtual_memory_max_bytes = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

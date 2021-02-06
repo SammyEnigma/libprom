@@ -19,12 +19,24 @@
 #define PROM_PROCESS_STATS_T_H
 
 #include "prom_gauge.h"
+#include "prom_counter.h"
 #include "prom_procfs_t.h"
 
-extern prom_gauge_t *prom_process_cpu_seconds_total;
-extern prom_gauge_t *prom_process_virtual_memory_bytes;
-extern prom_gauge_t *prom_process_rss_memory_bytes;
-extern prom_gauge_t *prom_process_start_time_seconds;
+extern prom_counter_t *prom_process_minflt;
+extern prom_counter_t *prom_process_cminflt;
+extern prom_counter_t *prom_process_majflt;
+extern prom_counter_t *prom_process_cmajflt;
+extern prom_counter_t *prom_process_utime;
+extern prom_counter_t *prom_process_stime;
+extern prom_counter_t *prom_process_time;
+extern prom_counter_t *prom_process_cutime;
+extern prom_counter_t *prom_process_cstime;
+extern prom_counter_t *prom_process_ctime;
+extern prom_gauge_t *prom_process_num_threads;
+extern prom_counter_t *prom_process_starttime;
+extern prom_gauge_t *prom_process_vsize;
+extern prom_gauge_t *prom_process_rss;
+extern prom_counter_t *prom_process_blkio;
 
 /**
  * @brief Refer to man proc and search for /proc/self/stat
@@ -71,7 +83,7 @@ typedef struct pps {
 	int processor;					// (39) %d  (since Linux 2.2.8)
 	unsigned rt_priority;			// (40) %u  (since Linux 2.5.19)
 	unsigned policy;				// (41) %u  (since Linux 2.5.19)
-	unsigned long long blkio_ticks;	// (42) %llu delayacct_blkio_ticks
+	unsigned long long blkio;		// (42) %llu delayacct_blkio_ticks
 	unsigned long guest_time;		// (43) %lu  (since Linux 2.6.24)
 	long int cguest_time;			// (44) %ld  (since Linux 2.6.24)
 	unsigned long start_data;		// (45) %lu  (since Linux 3.3)  [PT]
