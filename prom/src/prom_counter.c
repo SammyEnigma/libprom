@@ -66,3 +66,15 @@ prom_counter_add(prom_counter_t *self, double r_value, const char **label_vals)
 	pms_t *s = pms_from_labels(self, label_vals);
 	return (s == NULL) ? 1 : pms_add(s, r_value);
 }
+
+int
+prom_counter_reset(prom_counter_t *self, double r_value, const char **label_vals) {
+	if (self == NULL)
+		return 1;
+	if (self->type != PROM_COUNTER) {
+		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
+		return 1;
+	}
+	pms_t *s = pms_from_labels(self, label_vals);
+	return (s == NULL) ? 1 : pms_set(s, r_value);	// pms_set handles vals < 0
+}

@@ -106,4 +106,17 @@ int prom_counter_inc(prom_counter_t *self, const char **label_values);
  */
 int prom_counter_add(prom_counter_t *self, double r_value, const char **label_values);
 
+/**
+ * @brief Reset the given counter to the given value.
+ * @param self	Where to set the given value.
+ * @param r_value	Value to set. MUST be >= 0.
+ * @param label_values	The label values associated with the counter sample
+ *	being updated. The number of labels must match the value passed as
+ *	\c label_key_count in the counter's constructor. If no label values are
+ *	necessary, pass \c NULL. Otherwise, it may be convenient to pass this value
+ *	as a literal.
+ * @return A non-zero integer value upon failure, \c 0 otherwise.
+ */
+int prom_counter_reset(prom_counter_t *self, double r_value, const char **label_values);
+
 #endif  // PROM_COUNTER_H

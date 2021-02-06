@@ -54,10 +54,34 @@ test_counter_add(void) {
 	prom_counter_destroy(c);
 }
 
+void
+test_counter_reset(void) {
+	prom_counter_t *g = prom_counter_new("test_counter", "counter under test",
+		2, (const char *[]) {"foo", "bar"});
+	TEST_ASSERT(g);
+
+	prom_counter_reset(g, 100000000.1, sample_labels_a);
+	pms_t *sample = pms_from_labels(g, sample_labels_a);
+	TEST_ASSERT_EQUAL_DOUBLE(100000000.1, sample->r_value);
+
+	sample = pms_from_labels(g, sample_labels_b);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, sample->r_value);
+
+	prom_counter_reset(g, 1, sample_labels_a);
+	sample = pms_from_labels(g, sample_labels_a);
+	TEST_ASSERT_EQUAL_DOUBLE(1, sample->r_value);
+
+	TEST_ASSERT_TRUE_MESSAGE(prom_counter_reset(g, -1, sample_labels_a) > 0,
+		"prom_counter_reset() should not allow negative values");
+
+	prom_counter_destroy(g);
+}
+
 int
 main(int argc, const char **argv) {
 	UNITY_BEGIN();
 	RUN_TEST(test_counter_inc);
 	RUN_TEST(test_counter_add);
+	RUN_TEST(test_counter_reset);
 	return UNITY_END();
 }
