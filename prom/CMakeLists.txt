@@ -46,6 +46,7 @@ set(
     ${public_dir}/prom_histogram.h
     ${public_dir}/prom_histogram_buckets.h
     ${public_dir}/prom_linked_list.h
+    ${public_dir}/prom_log.h
     ${public_dir}/prom_map.h
     ${public_dir}/prom_metric.h
     ${public_dir}/prom_metric_sample.h
@@ -68,7 +69,6 @@ set(
     ${private_dir}/prom_linked_list.c
     ${private_dir}/prom_linked_list_i.h
     ${private_dir}/prom_linked_list_t.h
-    ${private_dir}/prom_log.h
     ${private_dir}/prom_log.c
     ${private_dir}/prom_map.c
     ${private_dir}/prom_map_i.h

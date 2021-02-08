@@ -1,7 +1,7 @@
 .PHONY: clean
 
 GCC ?= gcc
-CFLAGS ?= -g -Wall -I../prom/include -I../promhttp/include
+CFLAGS ?= -g -Wall -I../prom/include -I../promhttp/include -DPROM_LOG_ENABLE
 # You should "export LD_LIBRARY_PATH=../prom/build:../promhttp/build"
 LDFLAGS ?= -L../prom/build -L../promhttp/build
 

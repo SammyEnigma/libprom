@@ -24,6 +24,7 @@
 #include "prom.h"
 #include "prom_histogram.h"
 #include "promhttp.h"
+#include "prom_log.h"
 #include "foo.h"
 #include "bar.h"
 
@@ -86,8 +87,7 @@ main(int argc, const char **argv) {
 
 	auto void intHandler(int signal);
 	void intHandler(int signal) {
-		printf("\nshutting down...\n");
-		fflush(stdout);
+		PROM_LOG("\nshutting down...");
 		pcr_destroy(PROM_COLLECTOR_REGISTRY);
 		MHD_stop_daemon(daemon);
 		done = 1;
@@ -100,7 +100,7 @@ main(int argc, const char **argv) {
 		return 0;
 	}
 
-	printf("RUN 'curl localhost:%d/metrics'\n\n", PORT);
+	PROM_INFO("RUN 'curl localhost:%d/metrics'\n", PORT);
 	signal(SIGINT, intHandler);
 
 	// main application goes here - for simplicity it just waits for ^C
@@ -108,7 +108,7 @@ main(int argc, const char **argv) {
 		fputc('.', stdout); fflush(stdout);
 		sleep(1);
 	}
-	printf("Done.\n");
+	PROM_LOG("Done.");
 
 	return 0;
 }
