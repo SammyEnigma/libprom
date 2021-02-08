@@ -36,7 +36,7 @@
 #include "prom_process_limits_t.h"
 #include "prom_process_stat_i.h"
 #include "prom_process_stat_t.h"
-#include "prom_string_builder_i.h"
+#include "prom_string_builder.h"
 
 prom_map_t *
 prom_collector_default_collect(prom_collector_t *self) {

@@ -18,7 +18,7 @@
 #ifndef PROM_METRIC_FORMATTER_T_H
 #define PROM_METRIC_FORMATTER_T_H
 
-#include "prom_string_builder_t.h"
+#include "prom_string_builder.h"
 
 typedef struct pmf {
 	psb_t *string_builder;

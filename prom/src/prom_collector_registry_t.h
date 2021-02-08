@@ -27,7 +27,7 @@
 // Private
 #include "prom_map_t.h"
 #include "prom_metric_formatter_t.h"
-#include "prom_string_builder_t.h"
+#include "prom_string_builder.h"
 
 struct pcr {
 	const char *name;				/**< name of the registry. Do not modify! */

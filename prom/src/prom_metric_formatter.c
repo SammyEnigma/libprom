@@ -31,7 +31,7 @@
 #include "prom_metric_sample_histogram_t.h"
 #include "prom_metric_sample_t.h"
 #include "prom_metric_t.h"
-#include "prom_string_builder_i.h"
+#include "prom_string_builder.h"
 
 pmf_t *
 pmf_new() {

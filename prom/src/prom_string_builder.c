@@ -22,8 +22,7 @@
 
 // Private
 #include "prom_assert.h"
-#include "prom_string_builder_i.h"
-#include "prom_string_builder_t.h"
+#include "prom_string_builder.h"
 
 // The initial capacity of the string builder.
 #define PROM_STRING_BUILDER_INIT_SIZE 128

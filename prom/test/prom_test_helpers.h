@@ -26,6 +26,5 @@
 #include "prom_process_stat_t.h"
 #include "prom_procfs_i.h"
 #include "prom_procfs_t.h"
-#include "prom_string_builder_i.h"
-#include "prom_string_builder_t.h"
+#include "prom_string_builder.h"
 #include "unity.h"

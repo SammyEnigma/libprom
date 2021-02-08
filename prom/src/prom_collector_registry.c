@@ -36,7 +36,7 @@
 #include "prom_metric_i.h"
 #include "prom_metric_t.h"
 #include "prom_process_limits_i.h"
-#include "prom_string_builder_i.h"
+#include "prom_string_builder.h"
 
 pcr_t *PROM_COLLECTOR_REGISTRY;
 

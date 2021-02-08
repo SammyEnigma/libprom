@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2019-2020 DigitalOcean Inc.
  * Copyright 2021 Jens Elkner <jel+libprom@cs.uni-magdeburg.de>
  *
@@ -15,17 +15,28 @@
  * limitations under the License.
  */
 
+/**
+ * @file prom_string_builder.h
+ * A StringBuilder: uses an internal buffer to append strings and characters
+ * as needed and keeps track of the constructed string, grows the buffer by
+ * factor 2 automagically.
+ *
+ * @note	All \c psb_t parameter in the related functions are expected to
+ *	be != \c NULL, otherwise be prepared for core dumps.
+ *
+ */
 #ifndef PROM_STRING_BUILDER_I_H
 #define PROM_STRING_BUILDER_I_H
 
 #include <stddef.h>
 
-#include "prom_string_builder_t.h"
+/** @brief A string builder. */
+struct psb;
+typedef struct psb psb_t;
 
 /**
  * @brief	Setup a new string builder.
  * @return A new string builder or \c NULL on error.
- * @note	NULL params passed to any function to it may trigger a core dump.
  */
 psb_t *psb_new(void);
 
@@ -88,7 +99,10 @@ size_t psb_len(psb_t *self);
 char *psb_dump(psb_t *self);
 
 /**
- * @brief Get a reference to the buffered string.
+ * @brief Get a reference to the buffered string. One should **NOT** modify
+ * the string, treat it as a read-only and never ever free() it, otherwise
+ * be prepared for buffer overflows and core dumps. It has been made public
+ * solely to avoid the strdup() overhead of \c psb_dump().
  * @return a string, or \c NULL if not initialized yet.
  */
 char *psb_str(psb_t *self);

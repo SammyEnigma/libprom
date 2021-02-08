@@ -20,7 +20,7 @@
 
 #include "prom_collector.h"
 #include "prom_map_t.h"
-#include "prom_string_builder_t.h"
+#include "prom_string_builder.h"
 
 struct prom_collector {
 	const char *name;

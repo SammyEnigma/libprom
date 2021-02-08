@@ -51,6 +51,7 @@ set(
     ${public_dir}/prom_metric.h
     ${public_dir}/prom_metric_sample.h
     ${public_dir}/prom_metric_sample_histogram.h
+    ${public_dir}/prom_string_builder.h
     ${public_dir}/prom.h
 )
 
@@ -98,8 +99,6 @@ set(
     ${private_dir}/prom_procfs_t.h
     ${private_dir}/prom_procfs.c
     ${private_dir}/prom_string_builder.c
-    ${private_dir}/prom_string_builder_i.h
-    ${private_dir}/prom_string_builder_t.h
 )
 
 include(FindThreads)

@@ -25,6 +25,7 @@
 #include "prom_histogram.h"
 #include "promhttp.h"
 #include "prom_log.h"
+#include "prom_string_builder.h"
 #include "foo.h"
 #include "bar.h"
 
@@ -52,14 +53,31 @@ init(void) {
 
 #define PORT 8000
 
+void
+stringbuilder_demo() {
+	psb_t *sb = psb_new();					// string builder demo
+	psb_add_str(sb, "Hello world! ");
+	psb_add_char(sb, '.');
+	psb_add_char(sb, '.');
+	psb_add_char(sb, '.');
+	psb_add_str(sb, "done.");
+	psb_add_char(sb, '\n');
+	char *s = psb_dump(sb);
+	printf("%s", s);
+	free(s);
+	s = NULL;
+	psb_destroy(sb);
+	sb = NULL;
+}
+
 int
 main(int argc, const char **argv) {
 	init();
 
 	const char *labels[] = { "one", "two", "three", "four", "five" };
+
 	for (int i = 1; i <= 100; i++) {
 		double hist_value = (i % 2 == 0) ? 3.0 : 7.0;
-
 		if (prom_histogram_observe(test_histogram, hist_value, NULL))
 			exit(1);
 
@@ -70,6 +88,8 @@ main(int argc, const char **argv) {
 				exit(3);
 		}
 	}
+
+	stringbuilder_demo();
 
 	unsigned int flags;
 	// Handle each request one after a another using the best event loop style
