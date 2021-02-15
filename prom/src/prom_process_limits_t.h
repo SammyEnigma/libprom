@@ -19,25 +19,7 @@
 #define PROM_PROCESS_T_H
 
 #include "prom_gauge.h"
-#include "prom_procfs_t.h"
 
-extern prom_gauge_t *prom_process_open_fds;
 extern prom_gauge_t *prom_process_max_fds;
-
-typedef struct ppl_row {
-	const char *limit;	/**< limit name */
-	int soft;			/**< soft limit */
-	int hard;			/**< hard limit */
-	const char *units;	/**< unit name */
-} ppl_row_t;
-
-typedef struct ppl_current_row {
-	char *limit;	/**< limit name */
-	int soft;		/**< soft limit */
-	int hard;		/**< hard limit */
-	char *units;	/**< units name */
-} ppl_current_row_t;
-
-typedef prom_procfs_buf_t ppl_file_t;
 
 #endif  // PROM_PROCESS_T_H

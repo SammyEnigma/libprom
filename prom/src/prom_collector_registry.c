@@ -187,6 +187,8 @@ pcr_destroy(pcr_t *self) {
 	if (self == NULL)
 		return 0;
 
+	if (PROM_COLLECTOR_REGISTRY == self)
+		PROM_COLLECTOR_REGISTRY = NULL;
 	int err = prom_map_destroy(self->collectors);
 	err += prom_gauge_destroy(self->scrape_duration);
 	err += pmf_destroy(self->metric_formatter);

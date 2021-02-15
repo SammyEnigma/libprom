@@ -208,8 +208,6 @@ pcp_collect(prom_collector_t *self) {
 
 	prom_map_t *res = NULL;
 	pps_file_t *stat_f = NULL;
-	ppl_file_t *limits_f = NULL;
-	prom_map_t *limits_map = NULL;
 	pps_t *stat = NULL;
 
 	if (PAGE_SZ == 0) {
@@ -217,22 +215,7 @@ pcp_collect(prom_collector_t *self) {
 		TPS = sysconf(_SC_CLK_TCK);
 	}
 
-	// Allocate and create a *ppl_file_t
-	limits_f = ppl_file_new(self->proc_limits_file_path);
-	if (limits_f == NULL)
-		goto end;
-	// Allocate and create a *prom_map_t from ppl_file_t.
-	// This is the main storage container for the limits metric data
-	limits_map = ppl(limits_f);
-	if (limits_map == NULL)
-		goto end;
-
-	// Retrieve the *ppl_row_t for Max open files
-	ppl_row_t *max_fds = (ppl_row_t *)
-		prom_map_get(limits_map, "Max open files");
-	if (max_fds == NULL)
-		goto end;
-	if (prom_gauge_set(prom_process_max_fds, max_fds->soft, NULL))
+	if (ppl_update(self->proc_limits_file_path))
 		goto end;
 	// count open files and update
 	if (prom_gauge_set(prom_process_open_fds,prom_process_fds_count(NULL),NULL))
@@ -302,10 +285,6 @@ pcp_collect(prom_collector_t *self) {
 end:
 	// If there is any issue deallocating the following structures, return NULL
 	// to indicate failure
-	if (ppl_file_destroy(limits_f))
-		res = NULL;
-	if (prom_map_destroy(limits_map))
-		res = NULL;
 	if (pps_file_destroy(stat_f))
 		res = NULL;
 	if (pps_destroy(stat))

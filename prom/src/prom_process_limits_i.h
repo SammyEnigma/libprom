@@ -18,66 +18,19 @@
 #ifndef PROM_PROCESS_I_H
 #define PROM_PROCESS_I_H
 
-#include <stdbool.h>
-
-#include "prom_map_t.h"
 #include "prom_process_limits_t.h"
 
-/**
- * @brief Initialize the process gauge metrics
- */
-int prom_process_init(void);
-
-ppl_row_t *ppl_row_new(const char *limit, const int soft, const int hard, const char *units);
-
-int ppl_row_destroy(ppl_row_t *self);
-
-ppl_current_row_t *ppl_current_row_new(void);
-
-int ppl_current_row_set_limit(ppl_current_row_t *self, char *limit);
-
-int ppl_current_row_set_units(ppl_current_row_t *self, char *units);
-
-int ppl_current_row_clear(ppl_current_row_t *self);
-
-int ppl_current_row_destroy(ppl_current_row_t *self);
-
-ppl_file_t *ppl_file_new(const char *path);
-
-int ppl_file_destroy(ppl_file_t *self);
-
-prom_map_t *ppl(ppl_file_t *f);
-
-bool ppl_rdp_file(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_first_line(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_character(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_letter(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_digit(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_data_line(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_limit(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_word_and_space(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_word(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_soft_limit(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_hard_limit(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-bool ppl_rdp_units(ppl_file_t *f, prom_map_t *data, ppl_current_row_t *current_row);
-
-int ppl_rdp_next_token(ppl_file_t *f);
-
-bool ppl_rdp_match(ppl_file_t *f, const char *token);
-
+/** @brief Setup the global gauge instance to track max open files limit. */
 int ppl_init(void);
 
+/** @brief Destroy the global gauge instance used to track max open files limit.
+ */
 void ppl_cleanup(void);
+
+/** @brief Determine the current max open files limit and update the global
+ * gauage instance accordingly.
+ * @return \c 0 on success, a value != 0 if the update of the gauge failed.
+ */
+int ppl_update(const char *path);
 
 #endif  // PROM_PROCESS_I_H
