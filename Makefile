@@ -1,13 +1,14 @@
 CMAKE_EXTRA_OPTS ?= -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SKIP_BUILD_RPATH=TRUE
 MAKE_FLAGS ?= VERBOSE=1
-CFLAGS ?= -DPROM_LOG_ENABLE
+CFLAGS ?= -DPROM_LOG_ENABLE -g -O3
 
 # If TEST is set, build test instead of production binaries
 test: TEST := 1
 test: TESTDIR := .test
+test: CFLAGS += -Og
 
 # Enable troubleshooting info per default.
-prom: CMAKE_EXTRA_OPTS += -DCMAKE_C_FLAGS="-DPROM_LOG_ENABLE"
+prom: CMAKE_EXTRA_OPTS += -DCMAKE_C_FLAGS="$(CFLAGS)"
 
 .PHONY: build test clean distclean docs cleandocs prom promhttp example
 

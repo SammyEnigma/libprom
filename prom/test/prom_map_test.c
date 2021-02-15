@@ -36,6 +36,8 @@ test_prom_map(void) {
 			expected = "bar";
 		} else if (strcmp(key, "bing") == 0) {
 			expected = "bang";
+		} else {
+			expected = "";
 		}
 		const char *result = prom_map_get(map, key);
 		TEST_ASSERT_EQUAL_STRING(expected, result);
@@ -51,7 +53,7 @@ test_prom_map_when_large(void) {
 
 	// Ensure each inserted key and value are present
 	for (int i = 1; i <= 10000; i++) {
-		char buf[4];
+		char buf[6];
 		sprintf(buf, "%d", i);
 		const char *k = (const char *) buf;
 		int *set = malloc(sizeof(int));
@@ -68,7 +70,7 @@ test_prom_map_when_large(void) {
 
 	// Ensure each key and value is correct
 	for (int i = 1; i <= 10000; i++) {
-		char buf[5];
+		char buf[6];
 		sprintf(buf, "%d", i);
 		const char *k = (const char *)buf;
 		int actual = *((int *)prom_map_get(map, k));
