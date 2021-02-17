@@ -18,7 +18,7 @@ clean:
 	rm -rf prom/build prom/build.test
 	rm -rf promhttp/build
 	rm -rf promtest/build
-	cd example && make clean
+	cd example && $(MAKE) clean
 
 cleandocs:
 	rm -rf docs/html docs/latex Doxyfile.tmp
@@ -30,11 +30,11 @@ distclean: clean cleandocs
 prom:
 	-mkdir prom/build$(TESTDIR) && cd prom/build$(TESTDIR) && \
 	TEST=$(TEST) cmake -v -G "Unix Makefiles" $(CMAKE_EXTRA_OPTS) ..
-	cd prom/build$(TESTDIR) && make $(MAKE_FLAGS)
+	cd prom/build$(TESTDIR) && $(MAKE) $(MAKE_FLAGS)
 
 # Run "ctest --verbose --force-new-ctest-process" to get the details
 test: prom
-	cd prom/build$(TESTDIR) && make test
+	cd prom/build$(TESTDIR) && $(MAKE) test
 
 promhttp:
 	-mkdir promhttp/build && cd promhttp/build && \
@@ -44,7 +44,7 @@ promhttp:
 build: prom promhttp
 
 example: build
-	cd example && make $(MAKE_FLAGS)
+	cd example && $(MAKE) $(MAKE_FLAGS)
 
 docs: cleandocs
 	VERS=$$( cat VERSION ) && \
