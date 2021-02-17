@@ -31,13 +31,17 @@ test_prom_collector(void) {
 
 void
 test_prom_process_collector(void) {
-	prom_collector_t *c = prom_collector_process_new("../test/fixtures/limits",
-		"../test/fixtures/stat");
+	prom_collector_t *c =
+		ppc_new("../test/fixtures/limits", "../test/fixtures/stat", 0);
 	TEST_ASSERT_NOT_NULL(c);
+	TEST_ASSERT_NOT_NULL(c->data);
+	TEST_ASSERT_NOT_NULL(c->free_data_fn);
 	prom_map_t *m = c->collect_fn(c);
 	TEST_ASSERT_EQUAL_INT_MESSAGE(15 + 1 + 1, prom_map_size(m),
 		"Expected 15 stats + 1 limit + 1 manually");
 	prom_collector_destroy(c);
+	TEST_ASSERT_NULL(c->free_data_fn);
+	TEST_ASSERT_NULL(c->data);
 }
 
 int

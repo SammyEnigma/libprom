@@ -46,6 +46,15 @@ typedef struct prom_collector prom_collector_t;
 typedef prom_map_t *prom_collect_fn(prom_collector_t *self);
 
 /**
+ * @brief The function to use to cleanup and free custom data attached via
+ * prom_collector_data_set(). Per default it gets called by
+ * \c prom_collector_destroy() right after the prom_collect_fn() has been set
+ * to \c NULL. The default implementation simply sets the pointer to the data
+ * to \c NULL, which may cause memory leaks.
+ */
+typedef void prom_collector_free_data_fn(prom_collector_t *self);
+
+/**
  * @brief Create a collector
  * @param name	name of the collector.
  * @note	Name MUST NOT be \c default or \c process.
@@ -61,9 +70,12 @@ prom_collector_t *prom_collector_new(const char *name);
  * @param stat_path		If \c NULL POSIX and OS specific will be used to
  *	determine the stats. Otherwise, read the stats from the given file path -
  *	ususally used for testing, only.
+ * @param pid	If the given \c limits_path or \c stat_path is \c NULL, collect
+ *	the data from the process with the given \c pid . If \c pid is < 1, the
+ *	process id of the running process will be used.
  * @return The new collector on success, \c NULL otherwise.
  */
-prom_collector_t *prom_collector_process_new(const char *limits_path, const char *stat_path);
+prom_collector_t *ppc_new(const char *limits_path, const char *stat_path, pid_t pid);
 
 /**
  * @brief Destroy the given collector.
@@ -105,5 +117,37 @@ int prom_collector_add_metric(prom_collector_t *self, prom_metric_t *metric);
  * @return A non-zero integer value upon failure, \c 0 otherwise.
  */
 int prom_collector_set_collect_fn(prom_collector_t *self, prom_collect_fn *fn);
+
+/**
+ * @brief Attach custom data to the given collector as well as the callback to
+ * use to clean it up.
+ *
+ * @param self	Where to attach data and cleanup function.
+ * @param data	A pointer to custom data to attach. It gets not used by the
+ *	framework itself, just piggybacked to the collector as is.
+ * @param fn	Function, which should be used to free/cleanup the given custom
+ *	data. If not set or \c NULL, the default implementation will be used, which
+ *	just sets the related pointer to \c NULL, which might cause memory leaks.
+ *	It gets automagically called by prom_collector_destroy().
+ * @return A pointer to the data currently attached to the collector or \c NULL
+ *	if not yet set.
+ */
+void *prom_collector_data_set(prom_collector_t *self, void *data, prom_collector_free_data_fn *fn);
+
+/**
+ * @brief Get the pointer to the custom data attached to the given collector.
+ *
+ * @param self	The collector in question.
+ * @return a pointer to custom data, which might be \c NULL.
+ */
+void *prom_collector_data_get(prom_collector_t *self);
+
+/**
+ * @brief Get a map of all metrics of the given collector keyed by their names.
+ * Per default this function will be used, if no collect function has been set.
+ * @param self	The collector in question.
+ * @see \c prom_collector_set_collect_fn()
+ */
+prom_map_t *prom_collector_metrics_get(prom_collector_t *self);
 
 #endif  // PROM_COLLECTOR_H

@@ -86,6 +86,7 @@ set(
     ${private_dir}/prom_metric_sample_i.h
     ${private_dir}/prom_metric_sample_t.h
     ${private_dir}/prom_metric_t.h
+    ${private_dir}/prom_process_collector.c
     ${private_dir}/prom_process_fds.c
     ${private_dir}/prom_process_fds_i.h
     ${private_dir}/prom_process_fds_t.h

@@ -83,7 +83,7 @@ pcr_enable_process_metrics(pcr_t *self) {
 		PROM_WARN("A collector named '%s' is already registered.", cname);
 		return 1;
 	}
-	prom_collector_t *c = prom_collector_process_new(NULL, NULL);
+	prom_collector_t *c = ppc_new(NULL, NULL, 0);
 	if (c == NULL)
 		return 2;
 	if (prom_map_set(self->collectors, cname, c) != 0) {
@@ -124,7 +124,7 @@ pcr_enable_custom_process_metrics(pcr_t *self, const char *limits_path,
 			self->name, cname);
 		return 1;
 	}
-	c = prom_collector_process_new(limits_path, stats_path);
+	c = ppc_new(limits_path, stats_path, 0);
 	if (c == NULL) {
 		PROM_WARN("Failed to create a new '%s' collector from '%s' and '%s'.",
 			cname, limits_path, stats_path);

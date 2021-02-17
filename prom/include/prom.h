@@ -41,6 +41,7 @@ limitations under the License.
  *	* ppl .. prom_process_limits
  *	* pps .. prom_process_stat[s]
  *	* psb .. prom_string_builder
+ *	* ppc .. prom_process_collector (formerly prom_collector_process)
  *
  * @section Creating-and-Registering-Metrics Creating and Registering Metrics
  *

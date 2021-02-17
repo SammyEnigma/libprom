@@ -27,8 +27,8 @@ struct prom_collector {
 	prom_map_t *metrics;
 	prom_collect_fn *collect_fn;
 	psb_t *string_builder;
-	const char *proc_limits_file_path;
-	const char *proc_stat_file_path;
+	void *data;
+	prom_collector_free_data_fn *free_data_fn;
 };
 
 #endif  // PROM_COLLECTOR_T_H
