@@ -16,174 +16,121 @@
  */
 
 #include <stdio.h>
-#include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include <sys/sysinfo.h>
 
 // Public
 #include "prom_alloc.h"
+#include "prom_counter.h"
+#include "prom_gauge.h"
+#include "prom_log.h"
 
 // Private
 #include "prom_assert.h"
+#include "prom_process_collector_t.h"
 #include "prom_process_stat_t.h"
-#include "prom_procfs_i.h"
-
-prom_counter_t *prom_process_minflt = NULL;
-prom_counter_t *prom_process_cminflt = NULL;
-prom_counter_t *prom_process_majflt = NULL;
-prom_counter_t *prom_process_cmajflt = NULL;
-prom_counter_t *prom_process_utime = NULL;
-prom_counter_t *prom_process_stime = NULL;
-prom_counter_t *prom_process_time = NULL;
-prom_counter_t *prom_process_cutime = NULL;
-prom_counter_t *prom_process_cstime = NULL;
-prom_counter_t *prom_process_ctime = NULL;
-prom_gauge_t *prom_process_num_threads = NULL;
-prom_counter_t *prom_process_starttime = NULL;
-prom_gauge_t *prom_process_vsize = NULL;
-prom_gauge_t *prom_process_rss = NULL;
-prom_counter_t *prom_process_blkio = NULL;
 
 /**
  * @brief Initializes each gauge metric
  */
 int
-pps_init(void) {
+ppc_stats_new(prom_metric_t *m[]) {
+	if (m == NULL)
+		return 0;
+
 	// /proc/self/stat Field 10
-	prom_process_minflt = prom_counter_new("process_minor_pagefaults_total",
+	m[PM_MINFLT] = prom_counter_new("process_minor_pagefaults_total",
 		"Number of minor faults of the process "
-		"not caused a page load from disk",
-		0, NULL);
+		"not caused a page load from disk", 0, NULL);
 	// /proc/self/stat Field 11
-	prom_process_cminflt =
-		prom_counter_new("process_minor_pagefaults_children_total",
+	m[PM_CMINFLT] = prom_counter_new("process_minor_pagefaults_children_total",
 		"Number of minor faults of the process waited-for children "
-		"not caused a page load from disk",
-		0, NULL);
+		"not caused a page load from disk", 0, NULL);
 	// /proc/self/stat Field 12
-	prom_process_majflt = prom_counter_new("process_major_pagefaults_total",
+	m[PM_MAJFLT] = prom_counter_new("process_major_pagefaults_total",
 		"Number of major faults of the process "
-		"caused a page load from disk",
-		0, NULL);
+		"caused a page load from disk", 0, NULL);
 	// /proc/self/stat Field 13
-	prom_process_cmajflt =
-		prom_counter_new("process_major_pagefaults_children_total",
+	m[PM_CMAJFLT] = prom_counter_new("process_major_pagefaults_children_total",
 		"Number of major faults of the process's waited-for children "
-		"caused a page load from disk",
-		0, NULL);
+		"caused a page load from disk", 0, NULL);
 
 	// /proc/self/stat Field 14
-	prom_process_utime = prom_counter_new("process_cpu_seconds_user_total",
+	m[PM_UTIME] = prom_counter_new("process_cpu_seconds_user_total",
 		"Total CPU time the process spent in user mode in seconds", 0, NULL);
 	// /proc/self/stat Field 15
-	prom_process_stime = prom_counter_new("process_cpu_seconds_system_total",
+	m[PM_STIME] = prom_counter_new("process_cpu_seconds_system_total",
 		"Total CPU time the process spent in kernel mode in seconds", 0, NULL);
 	// /proc/self/stat Field 14 + 15
-	prom_process_time =
-		prom_counter_new("process_cpu_seconds_total",
+	m[PM_TIME] = prom_counter_new("process_cpu_seconds_total",
 		"Total CPU time the process spent in user and kernel mode in seconds",
 		0, NULL);
 	// /proc/self/stat Field 16
-	prom_process_cutime =
-		prom_counter_new("process_cpu_seconds_user_children_total",
+	m[PM_CUTIME] = prom_counter_new("process_cpu_seconds_user_children_total",
 		"Total CPU time the process's waited-for children spent in user mode "
 	    "in seconds", 0, NULL);
 	// /proc/self/stat Field 17
-	prom_process_cstime =
-		prom_counter_new("process_cpu_seconds_system_children_total",
+	m[PM_CSTIME] = prom_counter_new("process_cpu_seconds_system_children_total",
 		"Total CPU time the process's waited-for children spent in kernel mode "
 	    "in seconds", 0, NULL);
 	// /proc/self/stat Field 16 + 17
-	prom_process_ctime = prom_counter_new("process_cpu_seconds_children_total",
+	m[PM_CTIME] = prom_counter_new("process_cpu_seconds_children_total",
 		"Total CPU time the process's waited-for children spent in user and "
 		"in kernel mode in seconds", 0, NULL);
 
 	// /proc/self/stat Field 20
-	prom_process_num_threads = prom_gauge_new("process_num_threads",
+	m[PM_NUM_THREADS] = prom_gauge_new("process_num_threads",
 		"Number of threads in this process", 0, NULL);
 
 	// now - /proc/uptime + /proc/self/stat Field 22
-	prom_process_starttime = prom_counter_new("process_start_time_seconds",
+	m[PM_STARTTIME] = prom_counter_new("process_start_time_seconds",
 		"The time the process has been started in seconds elapsed since Epoch",
 		0, NULL);
 
 	// /proc/self/stat Field 23
-	prom_process_vsize = prom_gauge_new("process_virtual_memory_bytes",
+	m[PM_VSIZE] = prom_gauge_new("process_virtual_memory_bytes",
 			"Virtual memory size in bytes", 0, NULL);
 	// /proc/self/stat Field 24
-	prom_process_rss = prom_gauge_new("process_resident_memory_bytes",
+	m[PM_RSS] = prom_gauge_new("process_resident_memory_bytes",
 		"Resident set size of memory in bytes", 0, NULL);
 
 	// /proc/self/stat Field 25
-	prom_process_blkio = prom_counter_new("process_delayacct_blkio_ticks",
+	m[PM_BLKIO] = prom_counter_new("process_delayacct_blkio_ticks",
 		"Aggregated block I/O delays, measured in clock ticks (centiseconds)",
 		0, NULL);
-	return 0;
+
+	int res = 0;
+	for (int i = PM_MINFLT; i < PM_COUNT; i++)
+		if (m[i] != NULL)
+			res |= 1 << i;
+	return res;
 }
 
-void
-pps_cleanup(void) {
-	prom_counter_destroy(prom_process_minflt);
-	prom_process_minflt = NULL;
+static int
+fill_stats(stats_t *stats, int fd) {
+	// 12 * 11 + 1 * 18 + 1 * 2 + 18 * 21 = 530 but nice,priority have < 5, so:
+	char line[512];
+	char comm[18];	// the manpage says max 16 chars incl. '\0' + ()
 
-	prom_counter_destroy(prom_process_cminflt);
-	prom_process_cminflt = NULL;
+	static int PAGE_SZ = 0;
+	static unsigned long TPS = 0;
+	static unsigned long long last_starttime = 0;
+	static unsigned long long timestamp = 0;
 
-	prom_counter_destroy(prom_process_majflt);
-	prom_process_majflt = NULL;
+	if (PAGE_SZ == 0) {
+		PAGE_SZ = sysconf(_SC_PAGE_SIZE);
+		TPS = sysconf(_SC_CLK_TCK);
+	}
 
-	prom_counter_destroy(prom_process_cmajflt);
-	prom_process_cmajflt = NULL;
+	ssize_t len = pread(fd, line, sizeof(line) - 1, 0);
+	line[len] = '\0';
 
-	prom_counter_destroy(prom_process_utime);
-	prom_process_utime = NULL;
-
-	prom_counter_destroy(prom_process_stime);
-	prom_process_stime = NULL;
-
-	prom_counter_destroy(prom_process_time);
-	prom_process_time = NULL;
-
-	prom_counter_destroy(prom_process_cutime);
-	prom_process_cutime = NULL;
-
-	prom_counter_destroy(prom_process_cstime);
-	prom_process_cstime = NULL;
-
-	prom_counter_destroy(prom_process_ctime);
-	prom_process_ctime = NULL;
-
-	prom_gauge_destroy(prom_process_num_threads);
-	prom_process_num_threads = NULL;
-
-	prom_counter_destroy(prom_process_starttime);
-	prom_process_starttime = NULL;
-
-	prom_gauge_destroy(prom_process_vsize);
-	prom_process_vsize = NULL;
-
-	prom_gauge_destroy(prom_process_rss);
-	prom_process_rss = NULL;
-
-	prom_counter_destroy(prom_process_blkio);
-	prom_process_blkio = NULL;
-}
-
-pps_file_t *
-pps_file_new(const char *path) {
-	return prom_procfs_buf_new(path == NULL ? "/proc/self/stat" : path);
-}
-
-int
-pps_file_destroy(pps_file_t *self) {
-	return prom_procfs_buf_destroy(self);
-}
-
-pps_t *
-pps_new(pps_file_t *stat_f) {
-	pps_t *self = (pps_t *) prom_malloc(sizeof(pps_t));
-	self->comm = prom_malloc(128);
-
-	sscanf((const char *)stat_f->buf,
+	int n = sscanf((const char *) line,
 "%d "	// (1) pid  %d
 "%s "	// (2) comm  %s
 "%c "	// (3) state  %c
@@ -197,10 +144,10 @@ pps_new(pps_file_t *stat_f) {
 "%lu "	// (11) cminflt  %lu
 "%lu "	// (12) majflt  %lu
 "%lu "	// (13) cmajflt  %lu
-"%lu "	// (14) utime  %lu
-"%lu "	// (15) stime  %lu
-"%ld "	// (16) cutime  %ld
-"%ld "	// (17) cstime  %ld
+"%lf "	// (14) utime  %lu
+"%lf "	// (15) stime  %lu
+"%lf "	// (16) cutime  %ld
+"%lf "	// (17) cstime  %ld
 "%ld "	// (18) priority  %ld
 "%ld "	// (19) nice  %ld
 "%ld "	// (20) num_threads  %ld
@@ -237,69 +184,107 @@ pps_new(pps_file_t *stat_f) {
 "%lu "	// (51) env_end  %lu  (since Linux 3.5)  [PT]
 "%d ",	// (52) exit_code  %d  (since Linux 3.5)  [PT]
 
-		&self->pid,				// (1)
-		self->comm,				// (2)
-		&self->state,			// (3)
-		&self->ppid,			// (4)
-		&self->pgrp,			// (5)
-		&self->session,			// (6)
-		&self->tty_nr,			// (7)
-		&self->tpgid,			// (8)
-		&self->flags,			// (9)
-		&self->minflt,			// (10)
-		&self->cminflt,			// (11)
-		&self->majflt,			// (12)
-		&self->cmajflt,			// (13)
-		&self->utime,			// (14)
-		&self->stime,			// (15)
-		&self->cutime,			// (16)
-		&self->cstime,			// (17)
-		&self->priority,		// (18)
-		&self->nice,			// (19)
-		&self->num_threads,		// (20)
-		&self->itrealvalue,		// (21)
-		&self->starttime,		// (22)
-		&self->vsize,			// (23)
-		&self->rss,				// (24)
-		&self->rsslim,			// (25)
-		&self->startcode,		// (26)
-		&self->endcode,			// (27)
-		&self->startstack,		// (28)
-		&self->kstkesp,			// (29)
-		&self->kstkeip,			// (30)
-		&self->signal,			// (31)
-		&self->blocked,			// (32)
-		&self->sigignore,		// (33)
-		&self->sigcatch,		// (34)
-		&self->wchan,			// (35)
-		&self->nswap,			// (36)
-		&self->cnswap,			// (37)
-		&self->exit_signal,		// (38)
-		&self->processor,		// (39)
-		&self->rt_priority,		// (40)
-		&self->policy,			// (41)
-		&self->blkio,			// (42)
-		&self->guest_time,		// (43)
-		&self->cguest_time,		// (44)
-		&self->start_data,		// (45)
-		&self->end_data,		// (46)
-		&self->start_brk,		// (47)
-		&self->arg_start,		// (48)
-		&self->arg_end,			// (49)
-		&self->env_start,		// (50)
-		&self->env_end,			// (51)
-		&self->exit_code		// (52)
+		&stats->pid,			// (1)
+		comm,					// (2)
+		&stats->state,			// (3)
+		&stats->ppid,			// (4)
+		&stats->pgrp,			// (5)
+		&stats->session,		// (6)
+		&stats->tty_nr,			// (7)
+		&stats->tpgid,			// (8)
+		&stats->flags,			// (9)
+		&stats->minflt,			// (10)
+		&stats->cminflt,		// (11)
+		&stats->majflt,			// (12)
+		&stats->cmajflt,		// (13)
+		&stats->utime,			// (14)
+		&stats->stime,			// (15)
+		&stats->cutime,			// (16)
+		&stats->cstime,			// (17)
+		&stats->priority,		// (18)
+		&stats->nice,			// (19)
+		&stats->num_threads,	// (20)
+		&stats->itrealvalue,	// (21)
+		&stats->starttime,		// (22)
+		&stats->vsize,			// (23)
+		&stats->rss,			// (24)
+		&stats->rsslim,			// (25)
+		&stats->startcode,		// (26)
+		&stats->endcode,		// (27)
+		&stats->startstack,		// (28)
+		&stats->kstkesp,		// (29)
+		&stats->kstkeip,		// (30)
+		&stats->signal,			// (31)
+		&stats->blocked,		// (32)
+		&stats->sigignore,		// (33)
+		&stats->sigcatch,		// (34)
+		&stats->wchan,			// (35)
+		&stats->nswap,			// (36)
+		&stats->cnswap,			// (37)
+		&stats->exit_signal,	// (38)
+		&stats->processor,		// (39)
+		&stats->rt_priority,	// (40)
+		&stats->policy,			// (41)
+		&stats->blkio,			// (42)
+		&stats->guest_time,		// (43)
+		&stats->cguest_time,	// (44)
+		&stats->start_data,		// (45)
+		&stats->end_data,		// (46)
+		&stats->start_brk,		// (47)
+		&stats->arg_start,		// (48)
+		&stats->arg_end,		// (49)
+		&stats->env_start,		// (50)
+		&stats->env_end,		// (51)
+		&stats->exit_code		// (52)
 	);
+	if (n < 42) {
+		PROM_WARN("Incomplete /proc/self/stat line: %s", line);
+		return 4;
+	}
 
-	return self;
+	stats->utime /= TPS;
+	stats->stime /= TPS;
+	stats->cutime /= TPS;
+	stats->cstime /= TPS;
+	stats->rss *= PAGE_SZ;
+
+	if (last_starttime != stats->starttime || timestamp == 0) {
+		// usually a constant value. However if this fn gets called
+		// for several other processes ...
+		struct sysinfo s_info;
+		time_t now = time(NULL);
+		long uptime = sysinfo(&s_info) ? now : s_info.uptime;
+		last_starttime = stats->starttime;
+		timestamp = now - uptime + (stats->starttime / TPS);
+	}
+	stats->starttime = timestamp;
+	return 0;
 }
 
 int
-pps_destroy(pps_t *self) {
-	if (self == NULL)
-		return 0;
-	prom_free((void *) self->comm);
-	self->comm = NULL;
-	prom_free((void *) self);
-	return 0;
+ppc_stats_update(int fd[], prom_metric_t *m[], const char **lvals) {
+	int c = 1;
+	stats_t stats;
+
+	if (fd != NULL && fd[0] >= 0)
+		c = fill_stats(&stats, fd[0]);
+
+	int res = 0;
+	res |= cup(PM_MINFLT, c ? NaN : stats.minflt);
+	res |= cup(PM_MAJFLT, c ? NaN : stats.majflt);
+	res |= cup(PM_CMINFLT, c ? NaN : stats.cminflt);
+	res |= cup(PM_CMAJFLT, c ? NaN : stats.cmajflt);
+	res |= cup(PM_UTIME, c ? NaN : stats.utime);
+	res |= cup(PM_STIME, c ? NaN : stats.stime);
+	res |= cup(PM_TIME, c ? NaN : (stats.utime + stats.stime));
+	res |= cup(PM_CUTIME, c ? NaN : stats.cutime);
+	res |= cup(PM_CSTIME, c ? NaN : stats.cstime);
+	res |= cup(PM_CTIME, c ? NaN : (stats.cutime + stats.cstime));
+	res |= gup(PM_NUM_THREADS, c ? NaN : stats.num_threads);
+	res |= cup(PM_STARTTIME, c ? NaN : stats.starttime);
+	res |= gup(PM_VSIZE, c ? NaN : stats.vsize);
+	res |= gup(PM_RSS, c ? NaN : stats.rss);
+	res |= cup(PM_BLKIO, c ? NaN : stats.blkio);
+
+	return res;
 }

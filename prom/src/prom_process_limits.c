@@ -13,79 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <string.h>
-#include <stdio.h>
+#include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <stdbool.h>
+#include <string.h>
 
+#include "prom_gauge.h"
 #include "prom_log.h"
 #include "prom_process_limits_i.h"
-#include "prom_process_limits_t.h"
-
-prom_gauge_t *prom_process_max_fds = NULL;
+#include "prom_process_collector_t.h"
 
 /**
  * @brief Initializes each gauge metric found in prom_process_limits_t.h
  */
 int
-ppl_init(void) {
-	prom_process_max_fds = prom_gauge_new("process_max_fds",
-		"Maximum number of open file descriptors (soft limit)", 0, NULL);
-
-	return 0;
+ppc_limits_new(prom_metric_t *m[], const char **label_keys) {
+	if (m == NULL)
+		return 0;
+	m[PM_MAX_FDS] = prom_gauge_new("process_max_fds",
+		"Max. number of open file descriptors (soft limit)", 0, label_keys);
+	return m[PM_MAX_FDS] == NULL ? 0 : 1 << PM_MAX_FDS;
 }
 
-void
-ppl_cleanup(void) {
-	prom_gauge_destroy(prom_process_max_fds);
-	prom_process_max_fds = NULL;
+static double
+ppc_limits_get_maxfds(int fd) {
+	if (fd < 0) {
+		struct rlimit l;
+		getrlimit(RLIMIT_NOFILE, &l);
+		return l.rlim_cur == RLIM_INFINITY ? -1 : l.rlim_cur;
+	}
+
+	char line[17*80];
+	ssize_t slen;
+	char *p;
+
+	if ((slen = pread(fd, line, sizeof(line) - 1, 0)) == -1)
+		return NaN;
+	line[slen] = '\0';
+
+	if ((p = strstr(line, "Max open files  ")) == NULL)
+		return NaN;
+	p += 16;
+	while (*p != '\n' && p < (line + slen)) {
+		if (*p != ' ')
+			break;
+		p++;
+	}
+	if (*p == '\n' || *p == '\0')
+		return NaN;
+	return strncmp(p, "unlimited  ", 11) ? strtoul(p, NULL, 10) : -1;
 }
 
 int
-ppl_update(const char *path) {
-	if (prom_process_max_fds == NULL) {
-		PROM_WARN("prom_process_max_fds instance not yet initialized", "");
-		return 1;
-	}
-	if (path == NULL) {
-		struct rlimit limit;
-		getrlimit(RLIMIT_NOFILE, &limit);
-		if (prom_gauge_set(prom_process_max_fds,
-			limit.rlim_cur == RLIM_INFINITY ? -1 : limit.rlim_cur, NULL))
-		{
-			return 2;
-		}
-		return 0;
-	}
-
-	char *line = NULL;
-	size_t len = 0;
-	ssize_t slen;
-	char *p;
-	double val;
-	bool found = false;
-	FILE *f = fopen(path, "r");
-
-	if (f == NULL) {
-		perror(path);
-		return 1;
-	}
-	while ((slen = getline(&line, &len, f)) != -1) {
-		if (line[slen-1] != '\n')
-			continue;
-		if (strncmp(line, "Max open files  ", 16) != 0)
-			continue;
-		for (p = line + 16; *p != '\n'; p++)
-			if (*p != ' ')
-				break;
-		if (*p == '\n')
-			break;
-		found = true;
-		val = (strncmp(p, "unlimited  ", 11) == 0) ? -1 : strtoul(p, NULL, 10);
-	}
-	fclose(f);
-	if (! found)
-		return 1;
-	return prom_gauge_set(prom_process_max_fds, val, NULL);
+ppc_limits_update(int fd[], prom_metric_t *m[], const char **lvals) {
+	return gup(PM_MAX_FDS, ppc_limits_get_maxfds(fd[FD_LIMITS]));
 }

@@ -24,6 +24,7 @@
 #include "prom_alloc.h"
 #include "prom_collector.h"
 #include "prom_collector_registry.h"
+#include "prom_gauge.h"
 
 // Private
 #include "prom_assert.h"
@@ -83,7 +84,7 @@ pcr_enable_process_metrics(pcr_t *self) {
 		PROM_WARN("A collector named '%s' is already registered.", cname);
 		return 1;
 	}
-	prom_collector_t *c = ppc_new(NULL, NULL, 0);
+	prom_collector_t *c = ppc_new(NULL, NULL, 0, NULL, NULL);
 	if (c == NULL)
 		return 2;
 	if (prom_map_set(self->collectors, cname, c) != 0) {
@@ -124,7 +125,7 @@ pcr_enable_custom_process_metrics(pcr_t *self, const char *limits_path,
 			self->name, cname);
 		return 1;
 	}
-	c = ppc_new(limits_path, stats_path, 0);
+	c = ppc_new(limits_path, stats_path, 0, NULL, NULL);
 	if (c == NULL) {
 		PROM_WARN("Failed to create a new '%s' collector from '%s' and '%s'.",
 			cname, limits_path, stats_path);

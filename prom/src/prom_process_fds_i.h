@@ -18,8 +18,8 @@
 #ifndef PROM_PROESS_FDS_I_INCLUDED
 #define PROM_PROESS_FDS_I_INCLUDED
 
-int prom_process_fds_count(const char *path);
-int prom_process_fds_init(void);
-void prom_process_fds_cleanup(void);
+#include "prom_metric.h"
+int ppc_fds_new(prom_metric_t *m[], const char **label_keys);
+int ppc_fds_update(const char *path, prom_metric_t *m[], const char **label_vals);
 
 #endif  // PROM_PROESS_FDS_I_INCLUDED

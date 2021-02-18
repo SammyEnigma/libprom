@@ -18,32 +18,13 @@
 #ifndef PROM_PROCESS_STATS_T_H
 #define PROM_PROCESS_STATS_T_H
 
-#include "prom_gauge.h"
-#include "prom_counter.h"
-#include "prom_procfs_t.h"
-
-extern prom_counter_t *prom_process_minflt;
-extern prom_counter_t *prom_process_cminflt;
-extern prom_counter_t *prom_process_majflt;
-extern prom_counter_t *prom_process_cmajflt;
-extern prom_counter_t *prom_process_utime;
-extern prom_counter_t *prom_process_stime;
-extern prom_counter_t *prom_process_time;
-extern prom_counter_t *prom_process_cutime;
-extern prom_counter_t *prom_process_cstime;
-extern prom_counter_t *prom_process_ctime;
-extern prom_gauge_t *prom_process_num_threads;
-extern prom_counter_t *prom_process_starttime;
-extern prom_gauge_t *prom_process_vsize;
-extern prom_gauge_t *prom_process_rss;
-extern prom_counter_t *prom_process_blkio;
-
 /**
  * @brief Refer to man proc and search for /proc/self/stat
  */
-typedef struct pps {
+typedef struct stats {
+									// Linux type	Expected final value
 	int pid;						// (1) %d
-	char *comm;						// (2) %s
+	char *comm;						// (2) %s		16 byte + ()
 	char state;						// (3) %c
 	int ppid;						// (4) %d
 	int pgrp;						// (5) %d
@@ -55,17 +36,17 @@ typedef struct pps {
 	unsigned long cminflt;			// (11) %lu
 	unsigned long majflt;			// (12) %lu
 	unsigned long cmajflt;			// (13) %lu
-	unsigned long utime;			// (14) %lu
-	unsigned long stime;			// (15) %lu
-	long int cutime;				// (16) %ld
-	long int cstime;				// (17) %ld
+	double utime;					// (14) %lu		in seconds
+	double stime;					// (15) %lu		in seconds
+	double cutime;					// (16) %ld		in seconds
+	double cstime;					// (17) %ld		in seconds
 	long int priority;				// (18) %ld
 	long int nice;					// (19) %ld
 	long int num_threads;			// (20) %ld
 	long int itrealvalue;			// (21) %ld
-	unsigned long long starttime;	// (22) %llu
-	unsigned long vsize;			// (23) %lu
-	long int rss;					// (24) %ld
+	unsigned long long starttime;	// (22) %llu	in seconds since Epoche
+	unsigned long vsize;			// (23) %lu		in bytes
+	long int rss;					// (24) %ld		in bytes
 	unsigned long rsslim;			// (25) %lu
 	unsigned long startcode;		// (26) %lu  [PT]
 	unsigned long endcode;			// (27) %lu  [PT]
@@ -94,8 +75,6 @@ typedef struct pps {
 	unsigned long env_start;		// (50) %lu  (since Linux 3.5)  [PT]
 	unsigned long env_end;			// (51) %lu  (since Linux 3.5)  [PT]
 	int exit_code;					// (52) %d  (since Linux 3.5)  [PT]
-} pps_t;
-
-typedef prom_procfs_buf_t pps_file_t;
+} stats_t;
 
 #endif  // PROM_PROCESS_STATS_T_H

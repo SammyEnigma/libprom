@@ -73,16 +73,23 @@ prom_collector_t *prom_collector_new(const char *name);
  * @param pid	If the given \c limits_path or \c stat_path is \c NULL, collect
  *	the data from the process with the given \c pid . If \c pid is < 1, the
  *	process id of the running process will be used.
+ * @param label_keys	An arbitrary set of labels to assign to all metrics
+ *	managed by the created collector. Use \c NULL for none.
+ * @param label_vals	The values to use for the given label_keys. Same order
+ *	as label_keys is required.  Use \c NULL for none.
  * @return The new collector on success, \c NULL otherwise.
  */
-prom_collector_t *ppc_new(const char *limits_path, const char *stat_path, pid_t pid);
+prom_collector_t *ppc_new(const char *limits_path, const char *stat_path, pid_t pid, const char **label_keys, const char **label_vals);
 
 /**
- * @brief Destroy the given collector.
+ * @brief Destroy the given collector including all attached metrics.
  * @param self collector to destroy.
  * @return A non-zero integer value upon failure, 0 otherwise.
  * @note No matter what gets returned, you should never use any collector
- *	passed to this function but set it to \c NULL .
+ *	passed to this function but set it to \c NULL . Also remember, that per
+ *	default all metrics of the given collector get freed via
+ *	\c prom_gauge_destroy() or \c prom_counter_destroy() and should not be
+ *	used anymore.
  */
 int prom_collector_destroy(prom_collector_t *self);
 
@@ -102,10 +109,12 @@ int prom_collector_destroy_generic(void *gen);
 void prom_collector_free_generic(void *gen);
 
 /**
- * @brief Add the given metric to the given collector
+ * @brief Add the given metric to the given collector. It gets automatically
+ *	destroyed when the given collector gets destroyed.
  * @param self Where to add the metric.
- * @param metric Metric to add.
+ * @param metric Metric to add. \c NULL is allowed and gets silently ignored.
  * @return A non-zero integer value upon failure, \c 0 otherwise.
+ * @see \c prom_collector_destroy().
  */
 int prom_collector_add_metric(prom_collector_t *self, prom_metric_t *metric);
 

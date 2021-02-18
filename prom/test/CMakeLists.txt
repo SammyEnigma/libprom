@@ -62,8 +62,6 @@ foreach(
     prom_metric_sample_test
     prom_process_limits_test
     prom_string_builder_test
-    prom_procfs_test
-
 )
     register_test(${t})
 endforeach()

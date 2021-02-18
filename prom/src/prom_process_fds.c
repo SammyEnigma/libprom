@@ -16,43 +16,37 @@
  */
 
 #include <dirent.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <string.h>
 
 // Public
-#include "prom_alloc.h"
 #include "prom_gauge.h"
 
 // Private
 #include "prom_errors.h"
 #include "prom_log.h"
-#include "prom_process_fds_t.h"
-
-prom_gauge_t *prom_process_open_fds;
+#include "prom_process_collector_t.h"
 
 int
-prom_process_fds_init(void) {
-	prom_process_open_fds = prom_gauge_new("process_open_fds",
-		"Number of open file descriptors.", 0, NULL);
-	return 0;
+ppc_fds_new(prom_metric_t *m[], const char **label_keys) {
+	if (m == NULL)
+		return 0;
+	m[PM_OPEN_FDS] = prom_gauge_new("process_open_fds",
+		"Number of open file descriptors", 0, label_keys);
+	return m[PM_OPEN_FDS] == NULL ? 0 : 1 << PM_OPEN_FDS;
 }
 
-void
-prom_process_fds_cleanup(void) {
-	prom_gauge_destroy(prom_process_open_fds);
-	prom_process_open_fds = NULL;
-}
-
-int
-prom_process_fds_count(const char *path) {
+static double
+ppc_fds_count(const char *path) {
 	int count = 0;
 	struct dirent *de;
-	DIR *d = opendir(path == NULL ? "/proc/self/fd" : path);
 
+	if (path == NULL)
+		return NaN;
+
+	DIR *d = opendir(path);
 	if (d == NULL) {
-		PROM_LOG(PROM_STDIO_OPEN_DIR_ERROR);
-		return -1;
+		PROM_WARN(PROM_STDIO_OPEN_DIR_ERROR " '%s'", path);
+		return NaN;
 	}
 
 	while ((de = readdir(d)) != NULL) {
@@ -61,6 +55,11 @@ prom_process_fds_count(const char *path) {
 		count++;
 	}
 	if (closedir(d))
-		PROM_LOG(PROM_STDIO_CLOSE_DIR_ERROR);
+		PROM_WARN(PROM_STDIO_CLOSE_DIR_ERROR " '%s'", path);
 	return count;
+}
+
+int
+ppc_fds_update(const char *path, prom_metric_t *m[], const char **lvals) {
+	return gup(PM_OPEN_FDS, ppc_fds_count(path));
 }

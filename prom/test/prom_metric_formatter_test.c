@@ -112,7 +112,7 @@ test_pmf_load_metrics(void) {
 		"# TYPE test_counter_b counter",
 		"test_counter_b",
 		// from "process" collector
-		"# HELP process_max_fds Maximum number of open file descriptors "
+		"# HELP process_max_fds Max. number of open file descriptors "
 			"(soft limit)",
 		"# TYPE process_max_fds gauge",
 		"process_max_fds 1048576",

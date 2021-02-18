@@ -86,19 +86,15 @@ set(
     ${private_dir}/prom_metric_sample_i.h
     ${private_dir}/prom_metric_sample_t.h
     ${private_dir}/prom_metric_t.h
+    ${private_dir}/prom_process_collector_t.h
     ${private_dir}/prom_process_collector.c
     ${private_dir}/prom_process_fds.c
     ${private_dir}/prom_process_fds_i.h
-    ${private_dir}/prom_process_fds_t.h
     ${private_dir}/prom_process_limits.c
     ${private_dir}/prom_process_limits_i.h
-    ${private_dir}/prom_process_limits_t.h
     ${private_dir}/prom_process_stat.c
     ${private_dir}/prom_process_stat_i.h
     ${private_dir}/prom_process_stat_t.h
-    ${private_dir}/prom_procfs_i.h
-    ${private_dir}/prom_procfs_t.h
-    ${private_dir}/prom_procfs.c
     ${private_dir}/prom_string_builder.c
 )
 

@@ -111,7 +111,7 @@ prom_collector_set_collect_fn(prom_collector_t *self, prom_collect_fn *fn) {
 int
 prom_collector_add_metric(prom_collector_t *self, prom_metric_t *metric) {
 	if (self == NULL)
-		return 1;
+		return 0;
 	if (prom_map_get(self->metrics, metric->name) != NULL) {
 		PROM_LOG("metric already found in collector");
 		return 1;

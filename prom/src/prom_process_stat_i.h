@@ -18,13 +18,9 @@
 #ifndef PROM_PROCESS_STATS_I_H
 #define PROM_PROCESS_STATS_I_H
 
-#include "prom_process_stat_t.h"
+#include "prom_metric.h"
 
-pps_file_t *pps_file_new(const char *path);
-int pps_file_destroy(pps_file_t *self);
-pps_t *pps_new(pps_file_t *stat_f);
-int pps_destroy(pps_t *self);
-int pps_init(void);
-void pps_cleanup(void);
+int ppc_stats_new(prom_metric_t *m[], const char **label_keys);
+int ppc_stats_update(int fd[], prom_metric_t *m[], const char **label_vals);
 
 #endif  // PROM_PROCESS_STATS_I_H

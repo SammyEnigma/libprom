@@ -19,31 +19,49 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "prom_map_i.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include "prom_gauge.h"
+
 #include "prom_metric_sample_t.h"
+#include "prom_process_collector_t.h"
 #include "prom_process_limits_i.h"
-#include "prom_process_limits_t.h"
 #include "unity.h"
 
 const char *path = "../test/fixtures/limits";
 
 void
-test_ppl_file_parsing(void) {
-	TEST_ASSERT_EQUAL_INT(0, ppl_init());
-	TEST_ASSERT_EQUAL_INT(0, ppl_init());	// a 2nd time does no harm
-	TEST_ASSERT_NOT_NULL(prom_process_max_fds);
+test_ppc_limits(void) {
+	prom_metric_t *m[PM_COUNT];
+	memset(m, 0, sizeof(m));
+	TEST_ASSERT_NULL(m[PM_MAX_FDS]);
+	TEST_ASSERT_EQUAL_INT(1 << PM_MAX_FDS, ppc_limits_new(m, NULL));
+	TEST_ASSERT_NOT_NULL(m[PM_MAX_FDS]);
 
-	TEST_ASSERT_EQUAL_INT(0, ppl_update(path));
-	pms_t *sample = pms_from_labels(prom_process_max_fds, NULL);
-	TEST_ASSERT_EQUAL_INT(sample->r_value, 1048576);
+	prom_metric_t *n[PM_COUNT];
+	TEST_ASSERT_NULL(n[PM_MAX_FDS]);
+	TEST_ASSERT_EQUAL_INT(1 << PM_MAX_FDS, ppc_limits_new(n, NULL));
+	TEST_ASSERT_NOT_NULL(n[PM_MAX_FDS]);
+	TEST_ASSERT_TRUE(m[PM_MAX_FDS] != n[PM_MAX_FDS]);
 
-	ppl_cleanup();
-	TEST_ASSERT_NULL(prom_process_max_fds);
+	int fd[FD_COUNT];
+	fd[FD_LIMITS] = open(path, O_RDONLY, 0666);
+	TEST_ASSERT_TRUE(fd[FD_LIMITS] >= 0);
+	TEST_ASSERT_EQUAL_INT(1 << PM_MAX_FDS, ppc_limits_update(fd, m, NULL));
+	pms_t *sample = pms_from_labels(m[PM_MAX_FDS], NULL);
+	TEST_ASSERT_EQUAL_INT(1048576, sample->r_value);
+
+	prom_gauge_destroy(m[PM_MAX_FDS]);
+	prom_gauge_destroy(n[PM_MAX_FDS]);
+	close(fd[FD_LIMITS]);
 }
 
 int
 main(int argc, const char **argv) {
 	UNITY_BEGIN();
-	RUN_TEST(test_ppl_file_parsing);
+	RUN_TEST(test_ppc_limits);
 	return UNITY_END();
 }

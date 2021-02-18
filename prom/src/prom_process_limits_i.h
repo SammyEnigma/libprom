@@ -18,19 +18,9 @@
 #ifndef PROM_PROCESS_I_H
 #define PROM_PROCESS_I_H
 
-#include "prom_process_limits_t.h"
+#include "prom_metric.h"
 
-/** @brief Setup the global gauge instance to track max open files limit. */
-int ppl_init(void);
-
-/** @brief Destroy the global gauge instance used to track max open files limit.
- */
-void ppl_cleanup(void);
-
-/** @brief Determine the current max open files limit and update the global
- * gauage instance accordingly.
- * @return \c 0 on success, a value != 0 if the update of the gauge failed.
- */
-int ppl_update(const char *path);
+int ppc_limits_new(prom_metric_t *m[], const char **label_keys);
+int ppc_limits_update(int fd[], prom_metric_t *m[], const char **label_vals);
 
 #endif  // PROM_PROCESS_I_H

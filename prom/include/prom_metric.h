@@ -24,6 +24,14 @@ limitations under the License.
 #ifndef PROM_METRIC_H
 #define PROM_METRIC_H
 
+#include <math.h>
+
+#ifdef NAN
+#define NaN NAN
+#else
+#define NaN (0.0f / 0.0f)
+#endif
+
 #include "prom_metric_sample.h"
 #include "prom_metric_sample_histogram.h"
 

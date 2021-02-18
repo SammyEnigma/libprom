@@ -32,7 +32,7 @@ test_prom_collector(void) {
 void
 test_prom_process_collector(void) {
 	prom_collector_t *c =
-		ppc_new("../test/fixtures/limits", "../test/fixtures/stat", 0);
+		ppc_new("../test/fixtures/limits","../test/fixtures/stat",0,NULL,NULL);
 	TEST_ASSERT_NOT_NULL(c);
 	TEST_ASSERT_NOT_NULL(c->data);
 	TEST_ASSERT_NOT_NULL(c->free_data_fn);
