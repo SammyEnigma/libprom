@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.5)
+cmake_minimum_required(VERSION 3.9.1)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -10,21 +10,21 @@ execute_process(
 
 execute_process(
     COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../VERSION
-    COMMAND sed --regexp-extended "s/([0-9]+)\.([0-9])+\.([0-9]+)/\\1/g"
+    COMMAND cut -f1 -d.
     OUTPUT_VARIABLE MajorVersion
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 execute_process(
     COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../VERSION
-    COMMAND sed --regexp-extended "s/([0-9]+)\.([0-9])+\.([0-9]+)/\\2/"
+    COMMAND cut -f2 -d.
     OUTPUT_VARIABLE MinorVersion
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 execute_process(
     COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../VERSION
-    COMMAND sed --regexp-extended "s/([0-9]+)\.([0-9])+\.([0-9]+)/\\3/"
+    COMMAND cut -f3 -d.
     OUTPUT_VARIABLE PatchVersion
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
@@ -102,8 +102,8 @@ include(FindThreads)
 
 add_library(prom SHARED)
 
-target_compile_options(prom PRIVATE "-Werror" "-Wuninitialized" "-Wall" "-Wno-unused-label" "-std=gnu11")
-target_compile_options(prom PUBLIC "-Werror" "-Wuninitialized" "-Wall" "-Wno-unused-label" "-std=gnu11")
+target_compile_options(prom PRIVATE "-Werror" "-Wuninitialized" "-Wall" "-Wno-unused-label" "-Wno-pragmas" "-std=gnu11")
+target_compile_options(prom PUBLIC "-Werror" "-Wuninitialized" "-Wall" "-Wno-unused-label" "-Wno-pragmas" "-std=gnu11")
 
 target_include_directories(
     prom
@@ -135,5 +135,5 @@ set(CPACK_PACKAGE_HOMEPAGE_URL https://github.com/jelmd/libprom)
 
 include(CPack)
 include(GNUInstallDirs)
-install(TARGETS prom ARCHIVE)
+install(TARGETS prom LIBRARY DESTINATION lib)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

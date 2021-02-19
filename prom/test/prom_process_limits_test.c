@@ -42,6 +42,7 @@ test_ppc_limits(void) {
 	TEST_ASSERT_NOT_NULL(m[PM_MAX_FDS]);
 
 	prom_metric_t *n[PM_COUNT];
+	memset(n, 0, sizeof(n));
 	TEST_ASSERT_NULL(n[PM_MAX_FDS]);
 	TEST_ASSERT_EQUAL_INT(1 << PM_MAX_FDS, ppc_limits_new(n, NULL));
 	TEST_ASSERT_NOT_NULL(n[PM_MAX_FDS]);

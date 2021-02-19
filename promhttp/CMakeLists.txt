@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.5)
+cmake_minimum_required(VERSION 3.9.1)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -10,21 +10,21 @@ execute_process(
 
 execute_process(
     COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../VERSION
-    COMMAND sed --regexp-extended "s/([0-9]+)\.([0-9])+\.([0-9]+)/\\1/g"
+    COMMAND cut -f1 -d.
     OUTPUT_VARIABLE MajorVersion
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 execute_process(
     COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../VERSION
-    COMMAND sed --regexp-extended "s/([0-9]+)\.([0-9])+\.([0-9]+)/\\2/"
+    COMMAND cut -f2 -d.
     OUTPUT_VARIABLE MinorVersion
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 execute_process(
     COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../VERSION
-    COMMAND sed --regexp-extended "s/([0-9]+)\.([0-9])+\.([0-9]+)/\\3/"
+    COMMAND cut -f3 -d.
     OUTPUT_VARIABLE PatchVersion
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
@@ -38,7 +38,7 @@ set(prom_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../prom/include)
 set(public_files ${public_dir}/promhttp.h)
 set(private_files ${private_dir}/promhttp.c)
 
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../prom/build)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../prom/build /opt/local/lib )
 
 include(FindThreads)
 
@@ -46,7 +46,7 @@ add_library(promhttp SHARED)
 
 target_include_directories(
     promhttp
-    PUBLIC ${public_dir} /usr/include ${prom_include_dir}
+    PUBLIC ${public_dir} /usr/include /usr/include/microhttpd /opt/local/include ${prom_include_dir}
     PRIVATE ${private_dir}
 )
 
@@ -78,5 +78,5 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "libmicrohttpd-dev")
 
 include(CPack)
 include(GNUInstallDirs)
-install(TARGETS promhttp ARCHIVE)
+install(TARGETS promhttp LIBRARY DESTINATION lib)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

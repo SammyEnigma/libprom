@@ -21,8 +21,13 @@ typedef enum proc_metric_t {
 	PM_MAX_FDS,
 	PM_MINFLT,
 	PM_MAJFLT,
+#ifdef __sun
+	PM_CPU_UTIL,
+	PM_MEM_UTIL,
+#else	// assume Linux
 	PM_CMINFLT,
 	PM_CMAJFLT,
+#endif
 	PM_UTIME,
 	PM_STIME,
 	PM_TIME,
@@ -33,15 +38,25 @@ typedef enum proc_metric_t {
 	PM_STARTTIME,
 	PM_VSIZE,
 	PM_RSS,
+#ifdef __sun
+	PM_VCTX,
+	PM_ICTX,
+#else	// assume Linux
 	PM_BLKIO,
+#endif
 	PM_COUNT /* required to be last */
 } proc_metric_t;
 
 typedef enum fd_t {
-	FD_STAT = 0,
-	FD_LIMITS,
+	FD_LIMITS = 0,
+	FD_STAT,
+#ifdef __sun
+	FD_PSINFO,
+	FD_USAGE,
+#endif
 	FD_COUNT /* required to be last */
 } fd_t;
+
 
 #define cup(what, val) \
 	prom_counter_reset(m[(what)], (val), lvals) ? 0 : 1 << (what)

@@ -24,6 +24,7 @@
 // Public
 #include "prom_alloc.h"
 #include "prom_gauge.h"
+#include "prom_log.h"
 #include "prom_collector.h"
 #include "prom_collector_registry.h"
 #include "prom_log.h"
@@ -70,8 +71,9 @@ prom_collector_t *
 ppc_new(const char *limits_path, const char *stat_path, pid_t pid,
 	const char **label_keys, const char **label_vals)
 {
-	char buf[32];
-	int err = 0;
+#define BUF_SZ 32
+	char buf[BUF_SZ];
+	int err;
 
 	prom_collector_t *self = prom_collector_new(COLLECTOR_NAME_PROCESS);
 	if (self == NULL)
@@ -80,6 +82,8 @@ ppc_new(const char *limits_path, const char *stat_path, pid_t pid,
 	ppc_cdata_t *data = prom_malloc(sizeof(ppc_cdata_t));
 	if (data == NULL)
 		return NULL;
+
+	// init
 	memset(data, 0, sizeof(ppc_cdata_t));
 	for (int i=0; i < FD_COUNT;  i++)
 		data->fd[i] = -2;
@@ -91,16 +95,54 @@ ppc_new(const char *limits_path, const char *stat_path, pid_t pid,
 	data->fd_dir = prom_strdup(buf);
 
 	if (limits_path != NULL) {
-		if ((data->fd[FD_LIMITS] = open(limits_path, O_RDONLY, 0666)) == -1)
+		if ((data->fd[FD_LIMITS] = open(limits_path, O_RDONLY, 0666)) == -1) {
+			PROM_WARN("Failed to open '%s'", limits_path);
 			goto fail;
+		}
 	}
 	if (stat_path == NULL) {
-		if (sprintf(buf, "/proc/%d/stat", data->pid) < 0)
+#ifdef __sun
+		#define STAT_FILE "/proc/%d/status"
+#else
+		// asume Linux
+		#define STAT_FILE "/proc/%d/stat"
+#endif
+		if ((err = snprintf(buf, BUF_SZ, STAT_FILE, data->pid)) < 0) {
+			PROM_WARN("Failed to open '%s'", buf);
 			goto fail;
-		stat_path = strdup(buf);
+		}
+		stat_path = buf;
+	} else {
+		err = strlen(stat_path);
 	}
-	if ((data->fd[FD_STAT] = open(stat_path, O_RDONLY, 0666)) == -1)
+	if ((data->fd[FD_STAT] = open(stat_path, O_RDONLY, 0666)) == -1) {
+		PROM_WARN("Failed to open '%s'", stat_path);
 		goto fail;
+	}
+#undef STAT_FILE
+
+#ifdef __sun
+	if (err > (BUF_SZ - 7) || err < 0) {
+		PROM_WARN("stat_path '%s' - unexpected length (%d)", stat_path, err);
+		goto fail;
+	}
+	err -= 6;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+	strncpy(buf, stat_path, err);
+#pragma GCC diagnostic pop
+	strcpy(buf + err, "psinfo");
+	if ((data->fd[FD_PSINFO] = open(buf, O_RDONLY)) == -1) {
+		PROM_WARN("Failed to open '%s'", buf);
+		goto fail;
+	}
+	strcpy(buf + err, "usage");
+	if ((data->fd[FD_USAGE] = open(buf, O_RDONLY)) == -1) {
+		PROM_WARN("Failed to open '%s'", buf);
+		goto fail;
+	}
+#endif
+#undef BUF_SZ
 
 	if (ppc_limits_new(data->m, label_keys) == 0)
 		goto fail;
@@ -109,6 +151,7 @@ ppc_new(const char *limits_path, const char *stat_path, pid_t pid,
 	if (ppc_stats_new(data->m, label_keys) == 0)
 		goto fail;
 
+	err = 0;
 	for (int i = 0; i < PM_COUNT; i++)
 		err += prom_collector_add_metric(self, data->m[i]);
 

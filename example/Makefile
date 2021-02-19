@@ -1,9 +1,10 @@
 .PHONY: clean
 
 GCC ?= gcc
-CFLAGS ?= -g -Wall -I../prom/include -I../promhttp/include -DPROM_LOG_ENABLE
+CFLAGS ?= -g -Wall -I../prom/include -I../promhttp/include -DPROM_LOG_ENABLE \
+	-I /usr/include/microhttpd -I /opt/local/include
 # You should "export LD_LIBRARY_PATH=../prom/build:../promhttp/build"
-LDFLAGS ?= -L../prom/build -L../promhttp/build
+LDFLAGS ?= -L../prom/build -L../promhttp/build -L/opt/local/lib
 
 DEPS = foo.h bar.h
 OBJ = foo.o bar.o main.o

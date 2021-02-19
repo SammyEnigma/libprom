@@ -2,6 +2,9 @@ CMAKE_EXTRA_OPTS ?= -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SKIP_BUILD_RPATH=TRUE
 MAKE_FLAGS ?= VERBOSE=1
 CFLAGS ?= -DPROM_LOG_ENABLE -g -O3
 
+LIB_PATH_SFX := $(shell [ `uname -s` = 'SunOS' ] && echo  '_64' )
+LIB_PATH := .:$$PWD/prom/build:$$PWD/promhttp/build:/opt/local/lib
+
 # If TEST is set, build test instead of production binaries
 test: TEST := 1
 test: TESTDIR := .test
@@ -34,7 +37,8 @@ prom:
 
 # Run "ctest --verbose --force-new-ctest-process" to get the details
 test: prom
-	cd prom/build$(TESTDIR) && $(MAKE) test
+	cd prom/build$(TESTDIR) && LD_LIBRARY_PATH$(LIB_PATH_SFX)=$(LIB_PATH) \
+	$(MAKE) test
 
 promhttp:
 	-mkdir promhttp/build && cd promhttp/build && \
@@ -58,5 +62,5 @@ smoke: build
 	cd promtest/build && $(MAKE) $(MAKE_FLAGS)
 	@echo "Test takes ~ 1 min ..."
 	PATH=$${PWD}/bin:$${PATH} \
-	LD_LIBRARY_PATH=$${PWD}/prom/build:$${PWD}/promhttp/build \
+	LD_LIBRARY_PATH$(LIB_PATH_SFX)=$(LIB_PATH):$$PWD/promtest/build \
 	promtest/build/promtest

@@ -95,7 +95,17 @@ main(int argc, const char **argv) {
 	// Handle each request one after a another using the best event loop style
 	// (SELECT, POLL, or EPOLL) for the current platform and log any errors
 	// to stderr.
-	flags = MHD_USE_INTERNAL_POLLING_THREAD | MHD_USE_AUTO | MHD_USE_ERROR_LOG;
+#ifdef MHD_USE_AUTO
+	flags = MHD_USE_AUTO;
+	#ifdef MHD_USE_INTERNAL_POLLING_THREAD
+		flags |= MHD_USE_INTERNAL_POLLING_THREAD;
+	#endif
+#else
+	flags = MHD_USE_POLL_INTERNALLY;
+#endif
+#ifdef MHD_USE_ERROR_LOG
+	flags |= MHD_USE_ERROR_LOG;
+#endif
 	// Or answer requests in parallel:
 //	flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_INTERNAL_POLLING_THREAD;
 

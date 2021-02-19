@@ -29,7 +29,7 @@ target_compile_options(Unity PUBLIC "-D UNITY_INCLUDE_DOUBLE")
 
 # promTest library exposes the headers in src for testing
 add_library(promTest STATIC)
-target_compile_options(promTest PUBLIC "-g3" "-Wall" "-DPROM_PROCESS_LIMITS_TEST_FILE_PATH=1" "-DPROM_ASSERT_ENABLE" "-DPROM_LOG_ENABLE")
+target_compile_options(promTest PUBLIC "-g3" "-Wall" "-Wno-pragmas" "-DPROM_ASSERT_ENABLE" "-DPROM_LOG_ENABLE")
 target_include_directories(
     promTest
     PUBLIC ${public_dir} ${private_dir} ${test_dir}

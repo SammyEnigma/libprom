@@ -88,7 +88,12 @@ test_pmf_load_metrics(void) {
 	const char *counter_keys[] = {};
 	pcr_init(PROM_NONE, "");
 	pcr_enable_custom_process_metrics(PROM_COLLECTOR_REGISTRY,
-		"../test/fixtures/limits", "../test/fixtures/stat");
+#ifdef __sun
+		"../test/fixtures/limits", "../test/fixtures/status"
+#else	// assume Linux
+		"../test/fixtures/limits", "../test/fixtures/stat"
+#endif
+	);
 	prom_metric_t *m_a = prom_metric_new(PROM_COUNTER, "test_counter_a",
 		"counter under test", 0, counter_keys);
 	prom_metric_t *m_b = prom_metric_new(PROM_COUNTER, "test_counter_b",

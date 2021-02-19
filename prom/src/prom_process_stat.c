@@ -22,7 +22,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <sys/sysinfo.h>
+#ifdef __sun
+	#define _STRUCTURED_PROC 1
+	#include <sys/procfs.h>
+	#include <sys/resource.h>
+#else
+	// assume Linux
+	#include <sys/sysinfo.h>
+#endif
 
 // Public
 #include "prom_alloc.h"
@@ -47,18 +54,25 @@ ppc_stats_new(prom_metric_t *m[]) {
 	m[PM_MINFLT] = prom_counter_new("process_minor_pagefaults_total",
 		"Number of minor faults of the process "
 		"not caused a page load from disk", 0, NULL);
-	// /proc/self/stat Field 11
-	m[PM_CMINFLT] = prom_counter_new("process_minor_pagefaults_children_total",
-		"Number of minor faults of the process waited-for children "
-		"not caused a page load from disk", 0, NULL);
 	// /proc/self/stat Field 12
 	m[PM_MAJFLT] = prom_counter_new("process_major_pagefaults_total",
 		"Number of major faults of the process "
 		"caused a page load from disk", 0, NULL);
+#ifdef __sun
+	m[PM_CPU_UTIL] = prom_gauge_new("process_cpu_utilization_percent",
+		"Percent of recent cpu time used by all lwps", 0, NULL);
+	m[PM_MEM_UTIL] = prom_gauge_new("process_mem_utilization_percent",
+		"Percent of system memory used by process", 0, NULL);
+#else	// assume Linux
+	// /proc/self/stat Field 11
+	m[PM_CMINFLT] = prom_counter_new("process_minor_pagefaults_children_total",
+		"Number of minor faults of the process waited-for children "
+		"not caused a page load from disk", 0, NULL);
 	// /proc/self/stat Field 13
 	m[PM_CMAJFLT] = prom_counter_new("process_major_pagefaults_children_total",
 		"Number of major faults of the process's waited-for children "
 		"caused a page load from disk", 0, NULL);
+#endif
 
 	// /proc/self/stat Field 14
 	m[PM_UTIME] = prom_counter_new("process_cpu_seconds_user_total",
@@ -99,10 +113,17 @@ ppc_stats_new(prom_metric_t *m[]) {
 	m[PM_RSS] = prom_gauge_new("process_resident_memory_bytes",
 		"Resident set size of memory in bytes", 0, NULL);
 
+#ifdef __sun
+	m[PM_VCTX] = prom_counter_new("process_voluntary_contextswitch_total",
+		"Number of voluntary context switches", 0, NULL);
+	m[PM_ICTX] = prom_counter_new("process_involuntary_contextswitch_total",
+		"Number of involuntary context switches", 0, NULL);
+#else // assume Linux
 	// /proc/self/stat Field 25
 	m[PM_BLKIO] = prom_counter_new("process_delayacct_blkio_ticks",
 		"Aggregated block I/O delays, measured in clock ticks (centiseconds)",
 		0, NULL);
+#endif
 
 	int res = 0;
 	for (int i = PM_MINFLT; i < PM_COUNT; i++)
@@ -110,6 +131,95 @@ ppc_stats_new(prom_metric_t *m[]) {
 			res |= 1 << i;
 	return res;
 }
+
+#ifdef __sun
+
+#define TIME_TO_DBL(x)		(x).tv_sec + (x).tv_nsec * 1e-9
+
+int
+ppc_stats_update(int fd[], prom_metric_t *m[], const char **lvals) {
+	pstatus_t	status;
+	psinfo_t	psinfo;
+	prusage_t	usage;
+
+	int res = 0;
+	double a, b;
+
+	if (fd[FD_STAT] < 0
+		|| (pread(fd[FD_STAT], &status, sizeof(pstatus_t), 0)) == -1)
+	{
+		perror("status");
+		res |= gup(PM_NUM_THREADS, NaN);
+		res |= cup(PM_UTIME, NaN);
+		res |= cup(PM_STIME, NaN);
+		res |= cup(PM_TIME, NaN);
+		res |= cup(PM_CUTIME, NaN);
+		res |= cup(PM_CSTIME, NaN);
+		res |= cup(PM_CTIME, NaN);
+	} else {
+#ifdef CREATE_TESTFILES
+		FILE *f = fopen("/tmp/status", "w+");
+		fwrite(&status, sizeof(pstatus_t), 1, f);
+		fclose(f);
+#endif
+		res |= gup(PM_NUM_THREADS, status.pr_nlwp + status.pr_nzomb);	// (20)
+		a = TIME_TO_DBL(status.pr_utime);
+		b = TIME_TO_DBL(status.pr_stime);
+		res |= cup(PM_UTIME, a);										// (14)
+		res |= cup(PM_STIME, b);										// (15)
+		res |= cup(PM_TIME, a + b);
+		a = TIME_TO_DBL(status.pr_cutime);
+		b = TIME_TO_DBL(status.pr_cstime);
+		res |= cup(PM_CUTIME, a);										// (16)
+		res |= cup(PM_CSTIME, b);										// (17)
+		res |= cup(PM_CTIME, a + b);
+	}
+
+	if (fd[FD_PSINFO] < 0
+		|| (pread(fd[FD_PSINFO], &psinfo, sizeof(psinfo_t), 0)) == -1)
+	{
+		perror("psinfo");
+		res |= gup(PM_VSIZE, NaN);
+		res |= gup(PM_RSS, NaN);
+		res |= gup(PM_CPU_UTIL, NaN);
+		res |= gup(PM_MEM_UTIL, NaN);
+		res |= cup(PM_STARTTIME, NaN);
+	} else {
+#ifdef CREATE_TESTFILES
+		FILE *f = fopen("/tmp/psinfo", "w+");
+		fwrite(&status, sizeof(psinfo), 1, f);
+		fclose(f);
+#endif
+		// num_threads = psinfo.pr_nlwp + psinfo.pr_nzomb;	// (20)
+		res |= gup(PM_VSIZE, psinfo.pr_size << 10);						// (23)
+		res |= gup(PM_RSS, psinfo.pr_rssize << 10);						// (24)
+		res |= gup(PM_CPU_UTIL, psinfo.pr_pctcpu);
+		res |= gup(PM_MEM_UTIL, psinfo.pr_pctmem);
+		res |= cup(PM_STARTTIME, psinfo.pr_start.tv_sec);				// (22)
+	}
+	if (fd[FD_USAGE] < 0
+		|| (pread(fd[FD_USAGE], &usage, sizeof(prusage_t), 0)) == -1)
+	{
+		perror("usage");
+		res |= cup(PM_MINFLT, NaN);
+		res |= cup(PM_MAJFLT, NaN);
+		res |= cup(PM_VCTX, NaN);
+		res |= cup(PM_ICTX, NaN);
+	} else {
+#ifdef CREATE_TESTFILES
+		FILE *f = fopen("/tmp/usage", "w+");
+		fwrite(&status, sizeof(usage), 1, f);
+		fclose(f);
+#endif
+		res |= cup(PM_MINFLT, usage.pr_minf);							// (10)
+		res |= cup(PM_MAJFLT, usage.pr_majf);							// (12)
+		res |= cup(PM_VCTX, usage.pr_vctx);
+		res |= cup(PM_ICTX, usage.pr_ictx);
+	}
+	return res;
+}
+
+#else // assume linux
 
 static int
 fill_stats(stats_t *stats, int fd) {
@@ -266,8 +376,8 @@ ppc_stats_update(int fd[], prom_metric_t *m[], const char **lvals) {
 	int c = 1;
 	stats_t stats;
 
-	if (fd != NULL && fd[0] >= 0)
-		c = fill_stats(&stats, fd[0]);
+	if (fd != NULL && fd[FD_STAT] >= 0)
+		c = fill_stats(&stats, fd[FD_STAT]);
 
 	int res = 0;
 	res |= cup(PM_MINFLT, c ? NaN : stats.minflt);
@@ -288,3 +398,4 @@ ppc_stats_update(int fd[], prom_metric_t *m[], const char **lvals) {
 
 	return res;
 }
+#endif

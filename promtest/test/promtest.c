@@ -34,8 +34,14 @@ setUp(void) {
 	// Set the collector registry on the handler to the default registry
 	promhttp_set_active_collector_registry(NULL);
 	// Start the HTTP server
-	promtest_daemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY
-		| MHD_USE_ERROR_LOG | MHD_USE_AUTO, PORT, NULL, NULL);
+	unsigned int flags = MHD_USE_SELECT_INTERNALLY;
+#ifdef MHD_USE_ERROR_LOG
+	flags |= MHD_USE_ERROR_LOG
+#endif
+#ifdef MHD_USE_AUTO
+	flags |= MHD_USE_AUTO;
+#endif
+	promtest_daemon = promhttp_start_daemon(flags, PORT, NULL, NULL);
 }
 
 void

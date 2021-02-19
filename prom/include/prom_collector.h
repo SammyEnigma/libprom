@@ -18,6 +18,7 @@ limitations under the License.
 #ifndef PROM_COLLECTOR_H
 #define PROM_COLLECTOR_H
 
+#include <sys/types.h>
 #include "prom_map.h"
 #include "prom_metric.h"
 

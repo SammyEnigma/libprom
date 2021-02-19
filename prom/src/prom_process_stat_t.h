@@ -18,6 +18,7 @@
 #ifndef PROM_PROCESS_STATS_T_H
 #define PROM_PROCESS_STATS_T_H
 
+#ifdef __linux
 /**
  * @brief Refer to man proc and search for /proc/self/stat
  */
@@ -76,5 +77,6 @@ typedef struct stats {
 	unsigned long env_end;			// (51) %lu  (since Linux 3.5)  [PT]
 	int exit_code;					// (52) %d  (since Linux 3.5)  [PT]
 } stats_t;
+#endif
 
 #endif  // PROM_PROCESS_STATS_T_H
