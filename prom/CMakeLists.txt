@@ -101,6 +101,11 @@ set(
 include(FindThreads)
 
 add_library(prom SHARED)
+set_target_properties(
+	prom PROPERTIES
+	VERSION ${PROJECT_VERSION}
+	SOVERSION ${PROJECT_VERSION_MAJOR}
+)
 
 target_compile_options(prom PRIVATE "-Werror" "-Wuninitialized" "-Wall" "-Wno-unused-label" "-Wno-pragmas" "-std=gnu11")
 target_compile_options(prom PUBLIC "-Werror" "-Wuninitialized" "-Wall" "-Wno-unused-label" "-Wno-pragmas" "-std=gnu11")

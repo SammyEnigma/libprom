@@ -43,6 +43,11 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../prom/build /opt/local/lib )
 include(FindThreads)
 
 add_library(promhttp SHARED)
+set_target_properties(
+	promhttp PROPERTIES
+	VERSION ${PROJECT_VERSION}
+	SOVERSION ${PROJECT_VERSION_MAJOR}
+)
 
 target_include_directories(
     promhttp
