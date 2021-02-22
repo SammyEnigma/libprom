@@ -19,6 +19,7 @@
 
 #include "microhttpd.h"
 #include "prom.h"
+#include "prom_log.h"
 
 pcr_t *PROM_ACTIVE_REGISTRY;
 
@@ -27,6 +28,8 @@ promhttp_set_active_collector_registry(pcr_t *registry) {
 	PROM_ACTIVE_REGISTRY = (registry == NULL)
 		? PROM_COLLECTOR_REGISTRY
 		: registry;
+	if (PROM_ACTIVE_REGISTRY == NULL)
+		PROM_WARN("No registry set to answer http requests", "");
 }
 
 int
@@ -55,8 +58,13 @@ promhttp_handler(void *cls, struct MHD_Connection *connection, const char *url,
 	}
 
 	response = MHD_create_response_from_buffer(strlen(body), body, mode);
-	ret = MHD_queue_response(connection, status, response);
-	MHD_destroy_response(response);
+	if (response == NULL) {
+		free(body);
+		ret = MHD_NO;
+	} else {
+		ret = MHD_queue_response(connection, status, response);
+		MHD_destroy_response(response);
+	}
 	return ret;
 }
 

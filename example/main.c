@@ -97,17 +97,24 @@ main(int argc, const char **argv) {
 	// to stderr.
 #ifdef MHD_USE_AUTO
 	flags = MHD_USE_AUTO;
+	// EITHER
 	#ifdef MHD_USE_INTERNAL_POLLING_THREAD
-		flags |= MHD_USE_INTERNAL_POLLING_THREAD;
+		flags |= MHD_USE_INTERNAL_POLLING_THREAD;	// EPOLL if avail or POLL
 	#endif
-#else
-	flags = MHD_USE_POLL_INTERNALLY;
+	/* OR
+	#ifdef MHD_USE_THREAD_PER_CONNECTION
+		flags |= MHD_USE_THREAD_PER_CONNECTION		// implies POLL
+	#endif
+	*/
+#else	// older libmicrohttpd versions
+	flags = MHD_USE_POLL_INTERNALLY;			// internal polling thread
+	/* OR
+	flags = MHD_USE_THREAD_PER_CONNECTION		// implies POLL
+	*/
 #endif
-#ifdef MHD_USE_ERROR_LOG
-	flags |= MHD_USE_ERROR_LOG;
+#ifdef MHD_USE_DEBUG
+	flags |= MHD_USE_DEBUG;	// same as MHD_USE_ERROR_LOG
 #endif
-	// Or answer requests in parallel:
-//	flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_INTERNAL_POLLING_THREAD;
 
 	struct MHD_Daemon *daemon = promhttp_start_daemon(flags, PORT, NULL, NULL);
 	if (daemon == NULL)

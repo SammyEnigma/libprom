@@ -276,6 +276,9 @@ pcr_validate_metric_name(pcr_t *self, const char *metric_name) {
 
 const char *
 pcr_bridge(pcr_t *self) {
+	if (self == NULL)
+		return strdup("# pcr_bridge(NULL)");
+
 	struct timespec start, end;
 	static const char *labels[] = { METRIC_LABEL_SCRAPE };
 	bool scrape = (self->scrape_duration != NULL)

@@ -51,11 +51,11 @@ ppc_stats_new(prom_metric_t *m[]) {
 		return 0;
 
 	// /proc/self/stat Field 10
-	m[PM_MINFLT] = prom_counter_new("process_minor_pagefaults_total",
+	m[PM_MINFLT] = prom_counter_new("process_minor_pagefaults",
 		"Number of minor faults of the process "
 		"not caused a page load from disk", 0, NULL);
 	// /proc/self/stat Field 12
-	m[PM_MAJFLT] = prom_counter_new("process_major_pagefaults_total",
+	m[PM_MAJFLT] = prom_counter_new("process_major_pagefaults",
 		"Number of major faults of the process "
 		"caused a page load from disk", 0, NULL);
 #ifdef __sun
@@ -65,40 +65,40 @@ ppc_stats_new(prom_metric_t *m[]) {
 		"Percent of system memory used by process", 0, NULL);
 #else	// assume Linux
 	// /proc/self/stat Field 11
-	m[PM_CMINFLT] = prom_counter_new("process_minor_pagefaults_children_total",
+	m[PM_CMINFLT] = prom_counter_new("process_children_minor_pagefaults",
 		"Number of minor faults of the process waited-for children "
 		"not caused a page load from disk", 0, NULL);
 	// /proc/self/stat Field 13
-	m[PM_CMAJFLT] = prom_counter_new("process_major_pagefaults_children_total",
+	m[PM_CMAJFLT] = prom_counter_new("process_children_major_pagefaults",
 		"Number of major faults of the process's waited-for children "
 		"caused a page load from disk", 0, NULL);
 #endif
 
 	// /proc/self/stat Field 14
-	m[PM_UTIME] = prom_counter_new("process_cpu_seconds_user_total",
+	m[PM_UTIME] = prom_counter_new("process_user_cpu_seconds",
 		"Total CPU time the process spent in user mode in seconds", 0, NULL);
 	// /proc/self/stat Field 15
-	m[PM_STIME] = prom_counter_new("process_cpu_seconds_system_total",
+	m[PM_STIME] = prom_counter_new("process_system_cpu_seconds",
 		"Total CPU time the process spent in kernel mode in seconds", 0, NULL);
 	// /proc/self/stat Field 14 + 15
-	m[PM_TIME] = prom_counter_new("process_cpu_seconds_total",
+	m[PM_TIME] = prom_counter_new("process_total_cpu_seconds",
 		"Total CPU time the process spent in user and kernel mode in seconds",
 		0, NULL);
 	// /proc/self/stat Field 16
-	m[PM_CUTIME] = prom_counter_new("process_cpu_seconds_user_children_total",
+	m[PM_CUTIME] = prom_counter_new("process_children_user_cpu_seconds",
 		"Total CPU time the process's waited-for children spent in user mode "
 	    "in seconds", 0, NULL);
 	// /proc/self/stat Field 17
-	m[PM_CSTIME] = prom_counter_new("process_cpu_seconds_system_children_total",
+	m[PM_CSTIME] = prom_counter_new("process_children_system_cpu_seconds",
 		"Total CPU time the process's waited-for children spent in kernel mode "
 	    "in seconds", 0, NULL);
 	// /proc/self/stat Field 16 + 17
-	m[PM_CTIME] = prom_counter_new("process_cpu_seconds_children_total",
+	m[PM_CTIME] = prom_counter_new("process_children_total_cpu_seconds",
 		"Total CPU time the process's waited-for children spent in user and "
 		"in kernel mode in seconds", 0, NULL);
 
 	// /proc/self/stat Field 20
-	m[PM_NUM_THREADS] = prom_gauge_new("process_num_threads",
+	m[PM_NUM_THREADS] = prom_gauge_new("process_threads_total",
 		"Number of threads in this process", 0, NULL);
 
 	// now - /proc/uptime + /proc/self/stat Field 22
@@ -114,9 +114,9 @@ ppc_stats_new(prom_metric_t *m[]) {
 		"Resident set size of memory in bytes", 0, NULL);
 
 #ifdef __sun
-	m[PM_VCTX] = prom_counter_new("process_voluntary_contextswitch_total",
+	m[PM_VCTX] = prom_counter_new("process_voluntary_ctxsw_total",
 		"Number of voluntary context switches", 0, NULL);
-	m[PM_ICTX] = prom_counter_new("process_involuntary_contextswitch_total",
+	m[PM_ICTX] = prom_counter_new("process_involuntary_ctxsw_total",
 		"Number of involuntary context switches", 0, NULL);
 #else // assume Linux
 	// /proc/self/stat Field 25
