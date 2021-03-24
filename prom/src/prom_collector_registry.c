@@ -274,7 +274,7 @@ pcr_validate_metric_name(pcr_t *self, const char *metric_name) {
 	return ret;
 }
 
-const char *
+char *
 pcr_bridge(pcr_t *self) {
 	if (self == NULL)
 		return strdup("# pcr_bridge(NULL)");
@@ -302,5 +302,5 @@ pcr_bridge(pcr_t *self) {
 		pmf_load_metric(self->metric_formatter, self->scrape_duration,
 			self->mprefix, compact);
 	}
-	return (const char *) pmf_dump(self->metric_formatter);
+	return pmf_dump(self->metric_formatter);
 }

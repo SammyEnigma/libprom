@@ -55,6 +55,9 @@ docs: cleandocs
 		sed -e "s|@VERSION@|$$VERS|" Doxyfile >Doxyfile.tmp
 	doxygen Doxyfile.tmp
 
+# If this test fails with something like 'JSON: root container is not an []'
+# the prom2json version picked up may not work, or is possibly for the wrong
+# architecture etc..  Check promtest/prom2json.sh for more information.
 smoke: build
 	promtest/prom2json.sh
 	-mkdir promtest/build && cd promtest/build && \

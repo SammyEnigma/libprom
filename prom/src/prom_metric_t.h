@@ -43,7 +43,7 @@ typedef enum prom_metric_type {
 /**
  * @brief PRIVATE Maps metric type constants to human readable string values
  */
-extern char *prom_metric_type_map[5];
+extern const char *prom_metric_type_map[5];
 
 /**
  * @brief PRIVATE An opaque struct to users containing metric metadata; one or

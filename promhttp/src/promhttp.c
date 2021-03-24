@@ -37,7 +37,7 @@ promhttp_handler(void *cls, struct MHD_Connection *connection, const char *url,
 	const char *method, const char *version, const char *upload_data,
 	size_t *upload_data_size, void **con_cls)
 {
-	void *body;
+	char *body;
 	struct MHD_Response *response;
 	enum MHD_ResponseMemoryMode mode = MHD_RESPMEM_PERSISTENT;
 	unsigned int status = MHD_HTTP_BAD_REQUEST;
@@ -50,7 +50,7 @@ promhttp_handler(void *cls, struct MHD_Connection *connection, const char *url,
 		body = "<html><body>See <a href='/metrics'>/metrics</a>.\r\n";
 		status = MHD_HTTP_OK;
 	} else if (strcmp(url, "/metrics") == 0) {
-		body = (void *) pcr_bridge(PROM_ACTIVE_REGISTRY);
+		body = pcr_bridge(PROM_ACTIVE_REGISTRY);
 		mode = MHD_RESPMEM_MUST_FREE;
 		status = MHD_HTTP_OK;
 	} else {
@@ -59,7 +59,8 @@ promhttp_handler(void *cls, struct MHD_Connection *connection, const char *url,
 
 	response = MHD_create_response_from_buffer(strlen(body), body, mode);
 	if (response == NULL) {
-		free(body);
+		if (mode == MHD_RESPMEM_MUST_FREE)
+			free(body);
 		ret = MHD_NO;
 	} else {
 		ret = MHD_queue_response(connection, status, response);

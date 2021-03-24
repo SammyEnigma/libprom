@@ -31,7 +31,7 @@
 #include "prom_metric_sample_histogram_i.h"
 #include "prom_metric_sample_i.h"
 
-char *prom_metric_type_map[5] =
+const char *prom_metric_type_map[5] =
 	{ "counter", "gauge", "histogram", "summary", "untyped" };
 
 prom_metric_t *

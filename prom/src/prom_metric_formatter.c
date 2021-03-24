@@ -247,22 +247,21 @@ pmf_load_metrics(pmf_t *self, prom_map_t *collectors,
 		}
 
 		prom_map_t *metrics = c->collect_fn(c);
-		if (metrics == NULL)
-			continue;
-
-		for (pll_node_t *current_node = metrics->keys->head;
-			current_node != NULL; current_node = current_node->next)
-		{
-			const char *mname = (const char *) current_node->item;
-			prom_metric_t *metric = (prom_metric_t *)
-				prom_map_get(metrics, mname);
-			if (metric == NULL) {
-				PROM_WARN("Collector '%s' has no metric named '%s'.", cname,
-					mname);
-				r++;
-				continue;
+		if (metrics != NULL) {
+			for (pll_node_t *current_node = metrics->keys->head;
+				current_node != NULL; current_node = current_node->next)
+			{
+				const char *mname = (const char *) current_node->item;
+				prom_metric_t *metric = (prom_metric_t *)
+					prom_map_get(metrics, mname);
+				if (metric == NULL) {
+					PROM_WARN("Collector '%s' has no metric named '%s'.", cname,
+						mname);
+					r++;
+					continue;
+				}
+				r += pmf_load_metric(self,metric,mprefix,compact);
 			}
-			r += pmf_load_metric(self,metric,mprefix,compact);
 		}
 		if (scrape_metric != NULL) {
 			int r = clock_gettime(CLOCK_MONOTONIC, &end);

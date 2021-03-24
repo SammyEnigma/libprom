@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "prom_log.h"
 
@@ -26,40 +27,94 @@
 #define MAX_MSG_LEN 1024
 
 static char LVL_TXT[][6] = { "", "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
+static FILE *stream = NULL;
+static int stream_fd = -1;
+static PROM_LOG_LEVEL lvl = PLL_NONE;
+
+FILE *
+prom_log_use(FILE *dst) {
+	int fdold, fdnew;
+	FILE *fnew, *fold;
+
+	if (dst == NULL)
+		return NULL;
+	fdold = fileno(dst);
+	if (fdold == -1)
+		return NULL;
+	fdnew = dup(fdold);
+	if (fdnew == -1)
+		return NULL;
+	fnew = fdopen(fdnew, "a");
+	if (fnew == NULL) {
+		close(fdnew);
+		return NULL;
+	}
+	fold = stream;
+	stream = fnew;
+	stream_fd = fdnew;
+	return fold;
+}
+
+PROM_LOG_LEVEL
+prom_log_level(PROM_LOG_LEVEL level) {
+	PROM_LOG_LEVEL old;
+	if (level == PLL_NONE)
+		return lvl;
+	old = lvl;
+	lvl = level;
+	return old;
+}
+
+PROM_LOG_LEVEL
+prom_log_level_parse(const char *level) {
+	if (level == NULL)
+		return 0;
+	// allow 1..5 as well
+	if (strlen(level) == 1) {
+		int c = level[0] - '0';
+		return  (c > 0 && c < PLL_COUNT) ? c : PLL_NONE;
+	}
+	if (strncmp("DEBUG", level, 6) == 0) {
+		return PLL_DBG;
+	} else if (strncmp("INFO", level, 5) == 0) {
+		return PLL_INFO;
+	} else if (strncmp("WARN", level, 5) == 0) {
+		return PLL_WARN;
+	} else if (strncmp("ERROR", level, 6) == 0) {
+		return PLL_ERR;
+	} else if (strncmp("FATAL", level, 6) == 0) {
+		return PLL_FATAL;
+	}
+	return PLL_NONE;
+}
 
 void
 prom_log(PROM_LOG_LEVEL level, const char* format, ...) {
-	static PROM_LOG_LEVEL lvl = 0;
 	char s[MAX_MSG_LEN];
 	size_t slen;
 	va_list args;
 
-	if (lvl == 0) {
+	if (lvl == PLL_NONE) {
 		char *s = getenv("PROM_LOG_LEVEL");
-		if (s == NULL) {
+		if ((lvl = prom_log_level_parse(s)) == PLL_NONE)
 			lvl = PLL_INFO;
-		} else if (strncmp("DEBUG", s, 6) == 0) {
-			lvl = PLL_DBG;
-		} else if (strncmp("WARN", s, 6) == 0) {
-			lvl = PLL_WARN;
-		} else if (strncmp("ERROR", s, 6) == 0) {
-			lvl = PLL_ERR;
-		} else if (strncmp("FATAL", s, 6) == 0) {
-			lvl = PLL_FATAL;
-		} else {
-			lvl = PLL_INFO;
-		}
 	}
 
 	if (level < lvl)
 		return;
 
+	// just because of Linux: stderr is not a constant ...
+	if (stream == NULL)
+		stream = stderr;
+
 	va_start(args,format);
 
 	slen = snprintf(s, sizeof(s) - 2, "%s: ", LVL_TXT[level]);
 	slen += vsnprintf(s + slen, sizeof(s) - 2 - slen, format, args);
-	fwrite(s, slen, 1, stderr);
-	fputc('\n', stderr);
+	fwrite(s, slen, 1, stream);
+	fputc('\n', stream);
+	fflush(stream);			// flush to page cache
+	fsync(stream_fd);		// flush to disk
 
 	va_end(args);
 }

@@ -107,7 +107,7 @@ int pcr_default_init(void);
  *	where per default all new metrics get attached.
  * @param mprefix	If not \c NULL, prefix each metric's name with this
  *	string when metrics get exposed. E.g. one may use "appname_".
- * @return A non-zero integer value upon failure  - the registry is unusabele.
+ * @return A non-zero integer value upon failure  - the registry is unusable.
  */
 int pcr_init(PROM_INIT_FLAGS features, const char *mprefix);
 
@@ -120,7 +120,11 @@ int pcr_init(PROM_INIT_FLAGS features, const char *mprefix);
 pcr_t *pcr_new(const char *name);
 
 /**
- * @brief Destroy the given collector registry.
+ * @brief Destroy the given collector registry. Before it releases its handles
+ *	to registered collectors, it calls \c prom_collector_destroy() on them, and
+ *	this in turn calls \c prom_metric_destroy() for all the collector's metrics.
+ *  So keep in mind, that after this call all registered collectors and related
+ *  metrics will not work anymore.
  * @param self	Registry to destroy.
  * @return A non-zero integer value upon failure, 0 otherwise.
  * @note	No matter what is returned, one should always set the pointer of
@@ -158,7 +162,7 @@ int pcr_enable_scrape_metrics(pcr_t *self);
  * collector.
  *
  * @param metric The metric to register.
- * @return The registered metric, or \c NULL is registration failed.
+ * @return The registered metric, or \c NULL if registration failed.
  */
 prom_metric_t *pcr_must_register_metric(prom_metric_t *metric);
 
@@ -202,7 +206,7 @@ prom_collector_t *pcr_get(pcr_t *self, const char *name);
  * @param self The registry containing the collectors with the relevant metrics.
  * @return \c NULL on failure, the export otherwise.
  */
-const char *pcr_bridge(pcr_t *self);
+char *pcr_bridge(pcr_t *self);
 
 /**
  *@brief Validates that the given metric name complies with the specification:
