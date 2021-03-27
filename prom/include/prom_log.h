@@ -88,7 +88,7 @@ FILE *prom_log_use(FILE *stream);
 
 #define PROM_LOG_PRIV(level, fmt, ...)	\
 	prom_log(level, "%s:%d::%s(): " fmt , \
-		__FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
+		__FILE__, __LINE__, __func__, __VA_ARGS__);
 
 /**
  * @brief Log a debug message prefixed with the location of this macro
