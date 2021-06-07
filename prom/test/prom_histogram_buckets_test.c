@@ -21,9 +21,9 @@
 void
 test_phb_new(void) {
 	phb_t *result = phb_new(3, 1.0, 2.0, 3.0);
-	TEST_ASSERT_EQUAL_DOUBLE(1.0, result->upper_bounds[0]);
-	TEST_ASSERT_EQUAL_DOUBLE(2.0, result->upper_bounds[1]);
-	TEST_ASSERT_EQUAL_DOUBLE(3.0, result->upper_bounds[2]);
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, result->upper_bound[0]);
+	TEST_ASSERT_EQUAL_DOUBLE(2.0, result->upper_bound[1]);
+	TEST_ASSERT_EQUAL_DOUBLE(3.0, result->upper_bound[2]);
 	TEST_ASSERT_EQUAL_INT(3, phb_count(result));
 	phb_destroy(result);
 	result = NULL;
@@ -32,9 +32,9 @@ test_phb_new(void) {
 void
 test_phb_linear(void) {
 	phb_t *result = phb_linear(0.0, 1.5, 3);
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, result->upper_bounds[0]);
-	TEST_ASSERT_EQUAL_DOUBLE(1.5, result->upper_bounds[1]);
-	TEST_ASSERT_EQUAL_DOUBLE(3.0, result->upper_bounds[2]);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, result->upper_bound[0]);
+	TEST_ASSERT_EQUAL_DOUBLE(1.5, result->upper_bound[1]);
+	TEST_ASSERT_EQUAL_DOUBLE(3.0, result->upper_bound[2]);
 	TEST_ASSERT_EQUAL_INT(3, phb_count(result));
 	phb_destroy(result);
 	result = NULL;
@@ -43,9 +43,9 @@ test_phb_linear(void) {
 void
 test_phb_expontential(void) {
 	phb_t *result = phb_exponential(1, 2, 3);
-	TEST_ASSERT_EQUAL_DOUBLE(1.0, result->upper_bounds[0]);
-	TEST_ASSERT_EQUAL_DOUBLE(2.0, result->upper_bounds[1]);
-	TEST_ASSERT_EQUAL_DOUBLE(4.0, result->upper_bounds[2]);
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, result->upper_bound[0]);
+	TEST_ASSERT_EQUAL_DOUBLE(2.0, result->upper_bound[1]);
+	TEST_ASSERT_EQUAL_DOUBLE(4.0, result->upper_bound[2]);
 	TEST_ASSERT_EQUAL_INT(3, phb_count(result));
 	phb_destroy(result);
 }

@@ -39,8 +39,6 @@ int pms_histogram_destroy(pms_histogram_t *self);
  */
 int pms_histogram_destroy_generic(void *gen);
 
-char *bucket_to_str(double bucket);
-
 void pms_histogram_free_generic(void *gen);
 
 #endif  // PROM_METRIC_HISTOGRAM_SAMPLE_I_H

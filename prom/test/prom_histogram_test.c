@@ -19,8 +19,9 @@
 
 void
 test_prom_histogram(void) {
+	phb_t *bucket = phb_linear(5.0, 5.0, 3);
 	prom_histogram_t *h = prom_histogram_new("test_histogram",
-		"histogram under test", phb_linear(5.0, 5.0, 3), 0, NULL);
+		"histogram under test", bucket, 0, NULL);
 
 	prom_histogram_observe(h, 1.0, NULL);
 	prom_histogram_observe(h, 7.0, NULL);
@@ -30,28 +31,25 @@ test_prom_histogram(void) {
 	pms_histogram_t *h_sample = pms_histogram_from_labels(h, NULL);
 
 	// Test counter for each bucket
-	char *bucket_key = bucket_to_str(5.0);
+	const char *bucket_key = bucket->key[0];
 	const char *l_value = prom_map_get(h_sample->l_values, bucket_key);
 	pms_t *sample = (pms_t *) prom_map_get(h_sample->samples, l_value);
 	TEST_ASSERT_EQUAL_STRING("test_histogram{le=\"5.0\"}", sample->l_value);
 	TEST_ASSERT_EQUAL_DOUBLE(1.0, sample->r_value);
-	free((char *) bucket_key);
 	bucket_key = NULL;
 
-	bucket_key = bucket_to_str(10.0);
+	bucket_key = bucket->key[1];
 	l_value = prom_map_get(h_sample->l_values, bucket_key);
 	sample = (pms_t *) prom_map_get(h_sample->samples, l_value);
 	TEST_ASSERT_EQUAL_STRING("test_histogram{le=\"10.0\"}", sample->l_value);
 	TEST_ASSERT_EQUAL_DOUBLE(2.0, sample->r_value);
-	free((char *) bucket_key);
 	bucket_key = NULL;
 
-	bucket_key = bucket_to_str(15.0);
+	bucket_key = bucket->key[2];
 	l_value = prom_map_get(h_sample->l_values, bucket_key);
 	sample = (pms_t *) prom_map_get(h_sample->samples, l_value);
 	TEST_ASSERT_EQUAL_STRING("test_histogram{le=\"15.0\"}", sample->l_value);
 	TEST_ASSERT_EQUAL_DOUBLE(3.0, sample->r_value);
-	free((char *) bucket_key);
 	bucket_key = NULL;
 
 	l_value = prom_map_get(h_sample->l_values, "+Inf");

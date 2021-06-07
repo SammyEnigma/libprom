@@ -46,8 +46,11 @@ prom_histogram_new(const char *name, const char *help, phb_t *buckets,
 	} else {
 		// Ensure the bucket values are increasing
 		for (int i = 1; i < buckets->count; i++) {
-			if (buckets->upper_bounds[i - 1] > buckets->upper_bounds[i])
+			if (buckets->upper_bound[i - 1] > buckets->upper_bound[i]
+					|| buckets->key[i] == NULL)
+			{
 				return NULL;
+			}
 		}
 		self->buckets = buckets;
 	}

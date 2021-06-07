@@ -28,6 +28,16 @@
 
 phb_t *prom_histogram_default_buckets = NULL;
 
+static char *
+double_to_str(double value) {
+	char buf[32];
+	int len = sprintf(buf, "%.17g", value);
+	if (!strchr(buf, '.') && len < 30) {
+		buf[len] = '.'; buf[len+1] = '0'; len += 2; buf[len] = '\0';
+	}
+	return strdup(buf);
+}
+
 phb_t *
 phb_new(size_t count, double bucket, ...) {
 	phb_t *self = (phb_t *) prom_malloc(sizeof(phb_t));
@@ -35,46 +45,59 @@ phb_new(size_t count, double bucket, ...) {
 		return NULL;
 
 	self->count = count;
-	self->upper_bounds = NULL;
+	self->upper_bound = NULL;
+	self->key = NULL;
 	double *upper_bounds = (double *) prom_malloc(sizeof(double) * count);
-	if (upper_bounds == NULL) {
+	const char **keys = (const char **) prom_malloc(sizeof(char *) * count);
+	if (upper_bounds == NULL || keys == NULL) {
 		phb_destroy(self);
 		return NULL;
 	}
 	upper_bounds[0] = bucket;
+	keys[0] = double_to_str(bucket);
 	if (count == 1) {
-		self->upper_bounds = upper_bounds;
+		self->upper_bound = upper_bounds;
+		self->key = keys;
 		return self;
 	}
 	va_list arg_list;
 	va_start(arg_list, bucket);
 	for (int i = 1; i < count; i++) {
 		upper_bounds[i] = va_arg(arg_list, double);
+		keys[i] = double_to_str(upper_bounds[i]);
 	}
 	va_end(arg_list);
-	self->upper_bounds = upper_bounds;
+	self->upper_bound = upper_bounds;
+	self->key = keys;
 	return self;
 }
 
 phb_t *
 phb_linear(double start, double width, size_t count) {
-	if (count <= 1)
+	if (count <= 1) {
+		PROM_WARN("count must be greater than %d", 1);
 		return NULL;
+	}
 
 	phb_t *self = (phb_t *) prom_malloc(sizeof(phb_t));
 	if (self == NULL)
 		return NULL;
-	self->upper_bounds = NULL;
+	self->upper_bound = NULL;
+	self->key = NULL;
 	double *upper_bounds = (double *) prom_malloc(sizeof(double) * count);
-	if (upper_bounds == NULL) {
+	const char **keys = (const char **) prom_malloc(sizeof(char *) * count);
+	if (upper_bounds == NULL || keys == NULL) {
 		phb_destroy(self);
 		return NULL;
 	}
 	upper_bounds[0] = start;
+	keys[0] = double_to_str(start);
 	for (size_t i = 1; i < count; i++) {
 		upper_bounds[i] = upper_bounds[i - 1] + width;
+		keys[i] = double_to_str(upper_bounds[i]);
 	}
-	self->upper_bounds = upper_bounds;
+	self->upper_bound = upper_bounds;
+	self->key = keys;
 	self->count = count;
 	return self;
 }
@@ -82,32 +105,37 @@ phb_linear(double start, double width, size_t count) {
 phb_t *
 phb_exponential(double start, double factor, size_t count) {
 	if (count < 1) {
-		PROM_WARN("count must be less than %d", 1);
+		PROM_WARN("count must be greater than or equal to %d", 1);
 		return NULL;
 	}
 	if (start <= 0) {
-		PROM_WARN("start must be less than or equal to %d", 0);
+		PROM_WARN("start must be greater than %d", 0);
 		return NULL;
 	}
 	if (factor <= 1) {
-		PROM_WARN("factor must be less than or equal to %d", 1);
+		PROM_WARN("factor must be greater than %d", 1);
 		return NULL;
 	}
 
 	phb_t *self = (phb_t *) prom_malloc(sizeof(phb_t));
 	if (self == NULL)
 		return NULL;
-	self->upper_bounds = NULL;
+	self->upper_bound = NULL;
+	self->key = NULL;
 	double *upper_bounds = (double *) prom_malloc(sizeof(double) * count);
-	if (upper_bounds == NULL) {
+	const char **keys = (const char **) prom_malloc(sizeof(char *) * count);
+	if (upper_bounds == NULL || keys == NULL) {
 		phb_destroy(self);
 		return NULL;
 	}
 	upper_bounds[0] = start;
+	keys[0] = double_to_str(start);
 	for (size_t i = 1; i < count; i++) {
 		upper_bounds[i] = upper_bounds[i - 1] * factor;
+		keys[i] = double_to_str(upper_bounds[i]);
 	}
-	self->upper_bounds = upper_bounds;
+	self->upper_bound = upper_bounds;
+	self->key = keys;
 	self->count = count;
 	return self;
 }
@@ -116,8 +144,10 @@ int
 phb_destroy(phb_t *self) {
 	if (self == NULL)
 		return 0;
-	prom_free((double *) self->upper_bounds);
-	self->upper_bounds = NULL;
+	for (int i=0; i < self->count; i++)
+		free((char *) self->key[i]);
+	prom_free((double *) self->upper_bound);
+	prom_free((char **) self->key);
 	prom_free(self);
 	return 0;
 }

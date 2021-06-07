@@ -36,7 +36,7 @@
 // Static Declarations
 //////////////////////////////////////////////////////////////////////////////
 
-static const char *l_value_for_bucket(pms_histogram_t *self, const char *name, size_t label_count, const char **label_keys, const char **label_values, double bucket);
+static const char *l_value_for_bucket(pms_histogram_t *self, const char *name, size_t label_count, const char **label_keys, const char **label_values, const char *bucket_key);
 
 static const char *l_value_for_inf(pms_histogram_t *self, const char *name, size_t label_count, const char **label_keys, const char **label_values);
 
@@ -122,15 +122,15 @@ init_bucket_samples(pms_histogram_t *self, const char *name, size_t label_count,
 	// l_value and default value of 0.0. The l_value will contain the metric
 	// name, user labels, and finally, the le label and bucket value.
 	for (int i = 0; i < bucket_count; i++) {
+		const char *bucket_key = self->buckets->key[i];
+		if (bucket_key == NULL)
+			return 3;
 		const char *l_value = l_value_for_bucket(self, name, label_count,
-			label_keys, label_values, self->buckets->upper_bounds[i]);
+			label_keys, label_values, bucket_key);
 		if (l_value == NULL)
 			return 1;
 		if (pll_append(self->l_value_list, prom_strdup(l_value)))
 			return 2;
-		const char *bucket_key = bucket_to_str(self->buckets->upper_bounds[i]);
-		if (bucket_key == NULL)
-			return 3;
 		if (prom_map_set(self->l_values, bucket_key, (char *) l_value))
 			return 4;
 		pms_t *sample = pms_new(PROM_HISTOGRAM, l_value, 0.0);
@@ -138,7 +138,6 @@ init_bucket_samples(pms_histogram_t *self, const char *name, size_t label_count,
 			return 5;
 		if (prom_map_set(self->samples, l_value, sample))
 			return 6;
-		prom_free((void *)bucket_key);
 	}
 	return 0;
 }
@@ -259,24 +258,19 @@ pms_histogram_observe(pms_histogram_t *self, double value) {
 	// Update the counter for the proper bucket if found
 	int bucket_count = phb_count(self->buckets);
 	for (int i = (bucket_count - 1); i >= 0; i--) {
-		if (value > self->buckets->upper_bounds[i])
+		if (value > self->buckets->upper_bound[i])
 			break;
-		const char *bucket_key = bucket_to_str(self->buckets->upper_bounds[i]);
+		const char *bucket_key = self->buckets->key[i];
 		if (bucket_key == NULL)
 			goto end;
 		const char *l_value = prom_map_get(self->l_values, bucket_key);
-		if (l_value == NULL) {
-			prom_free((void *) bucket_key);
+		if (l_value == NULL)
 			goto end;
-		}
 
 		pms_t *sample = prom_map_get(self->samples, l_value);
-		if (sample == NULL) {
-			prom_free((void *) bucket_key);
+		if (sample == NULL)
 			goto end;
-		}
 
-		prom_free((void *) bucket_key);
 		if (pms_add(sample, 1.0))
 			goto end;
 	}
@@ -321,7 +315,7 @@ end:
 
 static const char *
 l_value_for_bucket(pms_histogram_t *self, const char *name, size_t label_count,
-	const char **label_keys, const char **label_values, double bucket)
+	const char **label_keys, const char **label_values, const char *bucket_key)
 {
 	PROM_ASSERT(self != NULL);
 
@@ -342,7 +336,7 @@ l_value_for_bucket(pms_histogram_t *self, const char *name, size_t label_count,
 		new_values[i] = prom_strdup(label_values[i]);
 	}
 	new_keys[label_count] = prom_strdup("le");
-	new_values[label_count] = bucket_to_str(bucket);
+	new_values[label_count] = prom_strdup(bucket_key);
 
 	const char *ret = pmf_load_l_value(self->metric_formatter, name, NULL,
 		label_count + 1, new_keys, new_values)
@@ -401,13 +395,4 @@ l_value_for_inf(pms_histogram_t *self, const char *name, size_t label_count,
 static void
 free_str_generic(void *gen) {
 	prom_free((void *) gen);
-}
-
-char *
-bucket_to_str(double bucket) {
-	char *buf = (char *) prom_malloc(sizeof(char) * 50);
-	sprintf(buf, "%g", bucket);
-	if (!strchr(buf, '.'))
-		strcat(buf, ".0");
-	return buf;
 }

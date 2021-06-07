@@ -29,7 +29,8 @@ limitations under the License.
 
 typedef struct phb {
 	int count;						/**< Number of buckets */
-	const double *upper_bounds;		/**< The bucket values */
+	const double *upper_bound;		/**< count ascending upper limits */
+	const char **key;				/**< count keys used to lookup samples. */
 } phb_t;
 
 /**
