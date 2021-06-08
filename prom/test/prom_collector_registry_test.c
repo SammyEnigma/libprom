@@ -175,11 +175,15 @@ test_pcr_default_init(void) {
 }
 
 void
-test_pcr_validate_metric_name(void) {
+test_pcr_check_name(void) {
 	prom_registry_test_init();
 
 	TEST_ASSERT_EQUAL_INT(0, pcr_validate_metric_name(PROM_COLLECTOR_REGISTRY,
 		"this_is_a_name09"));
+	TEST_ASSERT_EQUAL_INT(0, pcr_check_name("this_is_a_name09", 0));
+	TEST_ASSERT_EQUAL_INT(1,pcr_check_name("this_is_@_name09", 0) != 0 ? 1 : 0);
+	TEST_ASSERT_EQUAL_INT(0, pcr_check_name("this_is_a_name09", 1));
+	TEST_ASSERT_EQUAL_INT(1,pcr_check_name("this_is_:_name09", 1) != 0 ? 1 : 0);
 	prom_registry_test_destroy();
 }
 
@@ -214,7 +218,7 @@ main(int argc, const char **argv) {
 	RUN_TEST(test_pcr_must_register);
 	RUN_TEST(test_pcr_default_init);
 	RUN_TEST(test_pcr_bridge);
-	RUN_TEST(test_pcr_validate_metric_name);
+	RUN_TEST(test_pcr_check_name);
 	RUN_TEST(test_large_registry);
 	return UNITY_END();
 }

@@ -218,7 +218,22 @@ char *pcr_bridge(pcr_t *self);
  * @param self Registry to use.
  * @param metric_name	Name to validate
  * @return A non-zero integer value upon failure, \c 0 otherwise.
+ *
+ *@deprecated since 1.1.0
+ *@see Use \c pcr_check_name(name, 1) instead.
  */
 int pcr_validate_metric_name(pcr_t *self, const char *metric_name);
+
+/**
+ *@brief Check whether the given label | metric name complies with the specification:
+ *
+ * Reference: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+ *
+ * @param name	Name to validate
+ * @param is_label	Use 0 to indicate name is a metric name, or 1 to force a
+ * label name check.
+ * @return \c 0 if the given name is ok, a non-zero integer value otherwise.
+ */
+int pcr_check_name(const char *name, bool is_label);
 
 #endif  // PROM_H

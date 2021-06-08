@@ -261,15 +261,18 @@ pcr_get(pcr_t *self, const char *name) {
 
 int
 pcr_validate_metric_name(pcr_t *self, const char *metric_name) {
+	return pcr_check_name(metric_name, 0);
+}
+
+int
+pcr_check_name(const char *name, bool is_label) {
 	regex_t r;
-	int ret = 0;
-	if (regcomp(&r, "^[a-zA-Z_:][a-zA-Z0-9_:]*$", REG_EXTENDED)) {
-		PROM_WARN(PROM_REGEX_REGCOMP_ERROR, NULL);
-		ret = 1;
-	} else if (regexec(&r, metric_name, 0, NULL, 0)) {
-		PROM_WARN(PROM_REGEX_REGEXEC_ERROR, NULL);
-		ret = 2;
-	}
+	int ret;
+	const char *regex = is_label
+		? "^[a-zA-Z_][a-zA-Z0-9_]*$"
+		: "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
+	ret = regcomp(&r, regex, REG_NOSUB);
+	ret += regexec(&r, name, 0, NULL, 0);
 	regfree(&r);
 	return ret;
 }
