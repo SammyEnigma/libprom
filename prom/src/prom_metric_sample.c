@@ -75,7 +75,8 @@ int
 pms_sub(pms_t *self, double r_value) {
 	PROM_ASSERT(self != NULL);
 	if (self->type != PROM_GAUGE) {
-		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
+		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d) - %s = %s",
+			self->type, self->l_value, self->r_value);
 		return 1;
 	}
 	_Atomic double old = atomic_load(&self->r_value);
@@ -90,7 +91,8 @@ int
 pms_set(pms_t *self, double r_value) {
 	if (self->type != PROM_GAUGE && (self->type != PROM_COUNTER || r_value < 0))
 	{
-		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
+		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d) - %s = %s",
+			self->type, self->l_value, self->r_value);
 		return 1;
 	}
 	atomic_store(&self->r_value, r_value);

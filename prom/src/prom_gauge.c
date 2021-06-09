@@ -47,7 +47,8 @@ prom_gauge_inc(prom_gauge_t *self, const char **label_vals) {
 	if (self == NULL)
 		return 1;
 	if (self->type != PROM_GAUGE) {
-		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
+		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d) - %s",
+			self->type, self->name);
 		return 1;
 	}
 	pms_t *s = pms_from_labels(self, label_vals);
@@ -59,7 +60,8 @@ prom_gauge_dec(prom_gauge_t *self, const char **label_vals) {
 	if (self == NULL)
 		return 1;
 	if (self->type != PROM_GAUGE) {
-		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
+		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d) - %s",
+			self->type, self->name);
 		return 1;
 	}
 	pms_t *s = pms_from_labels(self, label_vals);
@@ -71,7 +73,8 @@ prom_gauge_add(prom_gauge_t *self, double r_value, const char **label_vals) {
 	if (self == NULL)
 		return 1;
 	if (self->type != PROM_GAUGE) {
-		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
+		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d) - %s",
+			self->type, self->name);
 		return 1;
 	}
 	pms_t *s = pms_from_labels(self, label_vals);
@@ -83,7 +86,8 @@ prom_gauge_sub(prom_gauge_t *self, double r_value, const char **label_vals) {
 	if (self == NULL)
 		return 1;
 	if (self->type != PROM_GAUGE) {
-		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
+		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d) - %s",
+			self->type, self->name);
 		return 1;
 	}
 	pms_t *s = pms_from_labels(self, label_vals);
@@ -95,7 +99,8 @@ prom_gauge_set(prom_gauge_t *self, double r_value, const char **label_vals) {
 	if (self == NULL)
 		return 1;
 	if (self->type != PROM_GAUGE) {
-		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
+		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d) - %s",
+			self->type, self->name);
 		return 1;
 	}
 	pms_t *s = pms_from_labels(self, label_vals);

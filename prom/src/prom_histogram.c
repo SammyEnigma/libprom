@@ -69,7 +69,8 @@ prom_histogram_observe(prom_histogram_t *self, double val,
 	if (self == NULL)
 		return 1;
 	if (self->type != PROM_HISTOGRAM) {
-		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d)", self->type);
+		PROM_WARN(PROM_METRIC_INCORRECT_TYPE " (%d) - %s",
+			self->type, self->name);
 		return 1;
 	}
 	pms_histogram_t *s = pms_histogram_from_labels(self, label_vals);
