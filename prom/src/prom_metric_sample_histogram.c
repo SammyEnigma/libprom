@@ -338,7 +338,7 @@ l_value_for_bucket(pms_histogram_t *self, const char *name, size_t label_count,
 	new_keys[label_count] = prom_strdup("le");
 	new_values[label_count] = prom_strdup(bucket_key);
 
-	const char *ret = pmf_load_l_value(self->metric_formatter, name, NULL,
+	const char *ret = pmf_load_l_value(self->metric_formatter, name, "bucket",
 		label_count + 1, new_keys, new_values)
 		? NULL
 		: (const char *) pmf_dump(self->metric_formatter);
@@ -378,7 +378,7 @@ l_value_for_inf(pms_histogram_t *self, const char *name, size_t label_count,
 	new_keys[label_count] = prom_strdup("le");
 	new_values[label_count] = prom_strdup("+Inf");
 
-	const char *ret = pmf_load_l_value(self->metric_formatter, name, NULL,
+	const char *ret = pmf_load_l_value(self->metric_formatter, name, "bucket",
 		label_count + 1, new_keys, new_values)
 		? NULL
 		: (const char *) pmf_dump(self->metric_formatter);
