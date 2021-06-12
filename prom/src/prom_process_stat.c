@@ -193,8 +193,8 @@ ppc_stats_update(int fd[], prom_metric_t *m[], const char **lvals) {
 		// num_threads = psinfo.pr_nlwp + psinfo.pr_nzomb;	// (20)
 		res |= gup(PM_VSIZE, psinfo.pr_size << 10);						// (23)
 		res |= gup(PM_RSS, psinfo.pr_rssize << 10);						// (24)
-		res |= gup(PM_CPU_UTIL, psinfo.pr_pctcpu);
-		res |= gup(PM_MEM_UTIL, psinfo.pr_pctmem);
+		res |= gup(PM_CPU_UTIL, 100.0 * psinfo.pr_pctcpu / 0x8000);
+		res |= gup(PM_MEM_UTIL, 100.0 * psinfo.pr_pctmem / 0x8000);
 		res |= cup(PM_STARTTIME, psinfo.pr_start.tv_sec);				// (22)
 	}
 	if (fd[FD_USAGE] < 0
